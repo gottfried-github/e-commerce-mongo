@@ -39,6 +39,8 @@ async function _update(id, fields, {update, getById, validate, validateObjectId,
 
     // see do validation in a specialized method
     const idFieldName = containsId(fields)
+    
+    // see Prohibiting updating `_id`
     if (idFieldName) throw {errors: [], node: {[idFieldName]: {errors: [m.FieldUnknown.create(`changing a document's id isn't allowed`)], node: null}}}
 
     let res = null

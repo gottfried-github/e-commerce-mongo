@@ -1,4 +1,4 @@
-# Validation
+# Product and Item validation
 ## Criteria
 See `'Additional conditions' in 'Structure/Product' in e-shop docs` for what the validation should implement.
 
@@ -29,8 +29,8 @@ In `mongodb` builtin jsonSchema validation, ["The error output ... should not be
 ## Validating _id in additional validation
 If I validate `_id`, if any, in additional validation, then the problem, described in `1` in `'Some situations, where the points become important'` goes away and I don't need the `1` solution from above.
 
-#### Machine-readable errors with ajv
-##### Some problems
+## Machine-readable errors with ajv
+### Some problems
 When data violates one of the schemas in `oneOf`, errors for every schema are generated (see `~/basement/house/test/ajv_oneOf` readme).
 Let's consider the case of the product schema.
 1. case data: `{}`, `{isInSale: 5}` (see `empty` and `invalid`). Both these data will have:
@@ -42,7 +42,7 @@ We've established, in `'Which errors to report'`, that in a case like this, we d
 
 3. `{isInSale: true, name: 5}`. This will have a `required` error for `itemInitial`.
 
-##### Some observations
+### Some observations
 Both schemas are identical except of:
     1. the value of the `enum` keyword for `isInSale`; and
     2. the `name` and `itemInitial` fields being `required`
@@ -51,7 +51,7 @@ So, whenever an error occurs, there will be identical errors for each of the sch
     1. there will be no `required` errors for `name` and `itemInitial` (because of `2` from above) from the second schema and,
     2. if `isInSale` satisfies one of the schemas, there will be no `enum` error for that schema (because of `1` from above).
 
-##### Filtering out irrelevant errors
+### Filtering out irrelevant errors
 1. In case if `isInSale` is invalid or missing: the `required` errors for the other fields are irrelevant - see `'Which errors to report'`; all the other errors will be identical for each of the schemas -- so we can
     1. ignore the `required` errors for the other fields and
     2. arbitrarily pick any schema and ignore errors from all the other ones
@@ -71,23 +71,14 @@ The method encapsulates the mongodb logic and of itself provides an abstraction.
 ## Prohibiting updating `_id`
 Including an `_id` in fields would modify the id of the document. If, for example, other documents reference the updated document, then we'd need to update those docs too. For now, I just don't allow to update document's id.
 
-# `BazarMongo`: validating the passed database
-I should at least check that: the appropriate collections have schema validation enabled and the schemas are correct - that is, from the latest migration.
-
 # `_product-validate`, `_validateBSON`: handle non-existing `itemInitial`
-In `validate`, I don't check whether `itemInitial` is present in the fields before passing them to `_validateBSON`, because which fields should be validated against BSON is not the concern of `validate`: it's the concern of `_validateBSON`. Henceforth, `_validateBSON` should handle it itself. Before it handled it implicitly, because `ObjectId` just generates a new id if passed `undefined` or `null`. But handling it explicitly makes the code a bit more accessible.
-## What if `itemInitial` is set, but is `null` or `undefined`?
-Again, `ObjectId` simply generates a new id if passed either of those - hence generating no error. But for the case that `_validateBSON` is designed for this is not appropriate: `itemInitial` must be an existing value, that should be a valid `objectId`. But, `_validateBSON` is a private method, used only by `validate`, which makes sure that `itemInitial`, if any, is a string, before passing the fields to `_validateBSON`.
-
-# Setup
-## The role of `migrate-mongo` in this project
-I only use the `create` command to create migration files. This doesn't seem to be connecting to the database, and using the `url` option in the config. So I commented it out entirely.
+In `validate`, I don't check whether `itemInitial` is present in the fields before passing them to `_validateBSON`, because which fields should be validated against BSON is not the concern of `validate`: it's the concern of `_validateBSON`. Henceforth, `_validateBSON` should handle it itself. 
 
 # References
 ## Behavior of the schema, defined in the `20220409125303-product-schema.js`
 See `~/basement/house/test/bazar-product-schema-mongodb` for examples of behavior for different data.
 
-# Testing
+# Product testing
 ## Testing output separately from input
 Tests are first and foremost about the *output* of a component, not necessarily about it's *input*: there could be different components taking different input and generating the same output and the output of all such components should be validated against the same code.
 Of course, a concrete component has to be tested to generate specific outputs for specific inputs.

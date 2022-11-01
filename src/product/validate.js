@@ -15,6 +15,7 @@ const otherProps = {
     name: {
         type: "string"
     },
+    // see Additional validation: type-validating `itemInitial` in `_validate`
     itemInitial: {}
 }
 
@@ -83,6 +84,7 @@ function filterErrors(errors) {
 }
 
 function _validateBSON(fields) {
+    // see `_product-validate`, `_validateBSON`: handle non-existing 
     if (!('_id' in fields) && !('itemInitial' in fields)) return null
 
     const errors = {errors: [], node: {}}
