@@ -10,7 +10,7 @@ async function _create(fields, {create}) {
 
     let id = null
     try {
-        id = await storeCreate(data)
+        id = await create(data)
     } catch(e) {
         // this must mean the encrypted data is invalid
         if (e instanceof InvalidData) {
@@ -33,7 +33,7 @@ async function _delete() {
     
 }
 
-async function _getById(id, {getById}) {
+async function _getById(id, {getById, validateObjectId}) {
     const idE = validateObjectId(id)
     if (idE) throw m.InvalidCriterion.create(idE.message, idE)
 
