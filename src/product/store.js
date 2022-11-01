@@ -1,5 +1,3 @@
-import {ObjectId} from 'bson'
-
 const VALIDATION_FAIL_MSG = "data validation failed"
 class InvalidData extends Error {constructor(message, data, ...args) {super(message, ...args); this.data = data}}
 
@@ -42,7 +40,7 @@ async function _storeDelete(id, {c}) {
 }
 
 async function _storeGetById(id, {c}) {
-    const res = await c.findOne({_id: new ObjectId(id)})
+    const res = await c.findOne({_id: id})
     return res
 }
 

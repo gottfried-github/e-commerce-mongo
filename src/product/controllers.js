@@ -1,4 +1,6 @@
+import {ObjectId} from 'bson'
 import * as m from '../../../bazar-common/messages.js'
+
 import {InvalidData} from './store.js'
 
 const VALIDATION_CONFLICT_MSG = "mongodb validation fails while model level validation succeeds"
@@ -95,7 +97,7 @@ async function _getById(id, {getById, validateObjectId}) {
     if (idE) throw m.InvalidCriterion.create(idE.message, idE)
 
     // spec: success
-    return getById(id)
+    return getById(new ObjectId(id))
 }
 
 export {_create, _update, _delete, _getById, ValidationConflict}
