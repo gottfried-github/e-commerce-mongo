@@ -1,4 +1,7 @@
-async function _create() {
+import {generateHash} from './helpers.js'
+import {InvalidData} from '../helpers.js'
+
+async function _create(fields, {create}) {
     // see create: validation logic
     const errors = credentials(fields)
     if (errors) throw errors

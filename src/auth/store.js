@@ -1,4 +1,4 @@
-class InvalidData extends Error {constructor(message, data, ...args) {super(message, ...args); this.data = data}}
+import {InvalidData} from '../helpers.js'
 
 async function _storeGetById(id) {
     const res = await c.findOne({_id: id})

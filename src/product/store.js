@@ -1,5 +1,6 @@
+import {InvalidData} from '../helpers.js'
+
 const VALIDATION_FAIL_MSG = "data validation failed"
-class InvalidData extends Error {constructor(message, data, ...args) {super(message, ...args); this.data = data}}
 
 async function _storeCreate(fields, {c}) {
     let res = null
