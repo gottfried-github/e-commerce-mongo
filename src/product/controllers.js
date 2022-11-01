@@ -1,4 +1,4 @@
-import * as m from '../../../common/messages.js'
+import * as m from '../../../bazar-common/messages.js'
 import {InvalidData} from './store.js'
 
 const VALIDATION_CONFLICT_MSG = "mongodb validation fails while model level validation succeeds"

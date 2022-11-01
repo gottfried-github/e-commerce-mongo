@@ -4,7 +4,7 @@ import {ObjectId} from 'mongodb'
 import {toTree} from 'ajv-errors-to-data-tree'
 import {traverseTree} from 'ajv-errors-to-data-tree/src/helpers.js'
 
-import * as m from '../../../common/messages.js'
+import * as m from '../../../bazar-common/messages.js'
 
 import {_parseFirstOneOfItemPath} from '../helpers.js'
 
