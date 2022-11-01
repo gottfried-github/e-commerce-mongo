@@ -102,3 +102,17 @@ The method is private, it's meant to be used by `validate`, which JSON-validate 
 
 ## `_product`, testing `_update`: the order of `validateObjectId` and `containsId` doesn't matter
 It doesn't matter which of the methods is called first and which is second. What matters: is that the data they return, if truthy, is thrown by `_update`, before `update` gets called. Thus, it doesn't matter whether one of the methods has been called before the other returned the truthy value.
+
+# Auth
+## `getByName`: validate name
+Presumably, there's no docs with invalid names (because api makes sure this doesn't happen during create operation). Therefore, if I don't validate the `name`, no document will be found.
+In the case of `getByName` this might be ok (although, it might not).
+<!-- In the case of `update`, an error will be thrown, stating that the document the user tries to update doesn't exist, but it won't specify the reason, which, in our case is an invalid name. Following the principle, that maximally detailed information should be provided during data validation, I conclude that I should validate the name in the case of `update`. -->
+
+### `create`: validation logic
+The input to `create` is `name` and string `password`. `password` itself doesn't get stored in the db but it still has to be validated; `name`, on the other hand, gets stored in the db and so it will undergo validation at the level of db. Should I validate `name` before writing it? One might say that we should follow the same logic `bazar-mongo` does, and only additionally validate `name` if builtin validation fails. But in the case in question, it just makes for simpler code to validate `name` beforehand, together with `password`: then I don't need to have additional lines handling builtin validation error.
+
+## Exposing password data
+Should I return password data in the read methods? The current data flow between `bazar-user-mongo` and `bazar-api` is as follows: the `api` gets user data; then it calls `isCorrectPassword` with that data and the string password. The latter requires the password data.
+What I could do instead is call `isCorrectPassword` directly in the `getByName` method and throw `InvalidCriterion` if it isn't.
+That is what `bazar-api` spec says.
