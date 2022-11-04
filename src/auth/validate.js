@@ -4,6 +4,34 @@ import {toTree} from 'ajv-errors-to-data-tree'
 import {traverseTree} from 'ajv-errors-to-data-tree/src/helpers.js'
 
 const ajv = new Ajv({allErrors: true, strictRequired: true})
+const _validatePsswd = ajv.compile({
+    type: "string",
+    minLength: 8,
+    maxLength: 150
+})
+
+function validatePsswd(psswd) {
+    _validatePsswd(psswd)
+
+    if (_validatePsswd.errors) return {errors: [], node: {
+        password: toTree(_validatePsswd.errors, (e) => {
+            if ('type' === e.keyword) return m.TypeErrorMsg.create(e.message, e)
+            if (!['minLength', 'maxLength'].includes(e.keyword)) throw new Error(`Ajv produced unpredictable error: ${e.keyword}`)
+    
+            return m.ValidationError.create(e.message, e)
+        })
+    }}
+
+    if (psswd.normalize() !== psswd) return {errors: [], node: {
+        password: {
+            errors: [m.ValidationError.create('normalized version of password differs from original')],
+            node: null
+        }
+    }}
+
+    return null
+}
+
 const _credentials = ajv.compile({
     type: "object",
     properties: {
