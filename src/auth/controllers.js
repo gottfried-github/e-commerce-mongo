@@ -15,7 +15,12 @@ async function _create(fields, {create}) {
         id = await create(data)
     } catch(e) {
         if (e instanceof ValueNotUnique) {
-            throw m.ValidationError.create(e.message, e)
+            throw {errors: [], node: {
+                name: {
+                    errors: [m.ValidationError.create(e.message, e)],
+                    node: null
+                }
+            }}
         }
 
         // this must mean the encrypted data is invalid
