@@ -109,8 +109,15 @@ Presumably, there's no docs with invalid names (because api makes sure this does
 In the case of `getByName` this might be ok (although, it might not).
 <!-- In the case of `update`, an error will be thrown, stating that the document the user tries to update doesn't exist, but it won't specify the reason, which, in our case is an invalid name. Following the principle, that maximally detailed information should be provided during data validation, I conclude that I should validate the name in the case of `update`. -->
 
-### `create`: validation logic
-The input to `create` is `name` and string `password`. `password` itself doesn't get stored in the db but it still has to be validated; `name`, on the other hand, gets stored in the db and so it will undergo validation at the level of db. Should I validate `name` before writing it? One might say that we should follow the same logic `bazar-mongo` does, and only additionally validate `name` if builtin validation fails. But in the case in question, it just makes for simpler code to validate `name` beforehand, together with `password`: then I don't need to have additional lines handling builtin validation error.
+### `create`: validate password before writing
+`password` itself doesn't get stored in the db, but before it can be used to create a hash of it, which does get stored, it has to be validated: for instance, it's lenght has to be validated and it should be normalizeable. 
+
+`name` on the other hand does get stored in the db, and undergoes builtin validation. The logic I follow regarding additional validation is to do it only if built-in validation fails. This is what I should make no exception of in this case.
+
+### `create`: binData validation in additional validation
+If I don't validate the `binData` fields in additional validation then it's possible to miss errors in the `binData` fields. E.g., if in addition to some of the `binData` fields being invalid the `name` field is invalid, built-in validation will fail and additional validation will be invoked. But if additional validation doesn't validate `binData`, then it won't report the errors and the user won't get to know that there's problems with it.
+
+Therefore, I shall validate the `binData` fields in additional validation.The `bson` package has the `Binary` class, which I believe is what `mongdb`'s nodejs driver uses to represent the built-in `binData` type.
 
 ## Exposing password data
 Should I return password data in the read methods? The current data flow between `bazar-user-mongo` and `bazar-api` is as follows: the `api` gets user data; then it calls `isCorrectPassword` with that data and the string password. The latter requires the password data.

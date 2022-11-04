@@ -3,6 +3,10 @@ import {ValidationError, ValidationConflict, ValueNotUnique} from '../helpers.js
 
 import {generateHash, isEqualHash} from './helpers.js'
 
+/**
+ * TODO: see "`create`: validate password before writing" and "`create`: binData validation in additional validation"
+ * 
+*/
 async function _create(fields, {create}) {
     // see create: validation logic
     const errors = credentials(fields)
