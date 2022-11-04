@@ -52,7 +52,6 @@ function credentials(fields) {
 
     if (!normalizationError) return errors
 
-    // see Which errors to report
     if (!errors.node.password) errors.node.password = {node: null, errors: []}
     errors.node.password.errors.push(m.ValidationError.create("password is different after normalization"))
 
