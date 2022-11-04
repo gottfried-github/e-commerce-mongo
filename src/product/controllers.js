@@ -1,10 +1,9 @@
 import {ObjectId} from 'bson'
 import * as m from '../../../bazar-common/messages.js'
 
-import {InvalidData} from './store.js'
+import {InvalidData, ValidationConflict} from './store.js'
 
 const VALIDATION_CONFLICT_MSG = "mongodb validation fails while model level validation succeeds"
-class ValidationConflict extends Error {constructor(message, data, ...args) {super(message, ...args); this.data = data}}
 
 /**
     @param {fields, in Types} fields
