@@ -3,7 +3,7 @@ import {InvalidData} from '../helpers.js'
 async function _storeCreate(fields, {c}) {
     let res = null
     try {
-        res = c.insertOne(fields)
+        res = await c.insertOne(fields)
     } catch(e) {
         if (121 === e.code) throw new InvalidData("invalid data", e)
         if (11000 === e.code) throw NotUnique.create(['name'], "username already exists")
