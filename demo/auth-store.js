@@ -2,7 +2,7 @@ import {ObjectId} from 'bson'
 import {MongoClient} from 'mongodb'
 import {generateHash} from '../src/auth/helpers.js'
 
-import {_storeCreate, _storeGetById} from '../src/auth/store.js'
+import {_storeCreate, _storeGetById, _storeGetByName} from '../src/auth/store.js'
 
 /* connect to database */
 if (!process.env.APP_DB_NAME || !process.env.APP_DB_USER || !process.env.APP_DB_PASS || !process.env.NET_NAME) throw new Error('all of the database connection parameters environment variables must be set')
@@ -20,10 +20,12 @@ function log(...args) {
 }
 
 async function main() {
+    const name = "still_other_name"
+
     let id = null
 
     try {
-        id = await _storeCreate({_id: new ObjectId(), name: "other_name", ...generateHash('01234567')}, {c})
+        id = await _storeCreate({_id: new ObjectId(), name, ...generateHash('01234567')}, {c})
     } catch(e) {
         log("_storeCreate threw, e:", e);
         return false
@@ -31,16 +33,27 @@ async function main() {
 
     log("_storeCreate id:", id);
 
-    let doc = null
+    let docById = null
     
     try {
-        doc = await _storeGetById(id, {c})
+        docById = await _storeGetById(id, {c})
     } catch (e) {
         log("_storeGetById threw, e:", e)
         return false
     }
 
-    log("got the saved doc by id, doc:", doc)
+    log("got the saved doc by id, docById:", docById)
+
+    let docByName = null
+
+    try {
+        docByName = await _storeGetByName(name, {c})
+    } catch (e) {
+        log("_storeGetById threw, e:", e)
+        return false
+    }
+
+    log("got the saved doc by name, docByName:", docByName)
 }
 
 export {
