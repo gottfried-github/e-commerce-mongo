@@ -1,11 +1,11 @@
-import {InvalidData} from '../helpers.js'
+import {ValidationError} from '../helpers.js'
 
 async function _storeCreate(fields, {c}) {
     let res = null
     try {
         res = await c.insertOne(fields)
     } catch(e) {
-        if (121 === e.code) throw new InvalidData("invalid data", e)
+        if (121 === e.code) throw new ValidationError("invalid data", e)
         if (11000 === e.code) throw new ValueNotUnique("given user name already exists", e)
     }
 

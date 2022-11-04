@@ -1,4 +1,4 @@
-import {InvalidData} from '../helpers.js'
+import {ValidationError} from '../helpers.js'
 
 const VALIDATION_FAIL_MSG = "data validation failed"
 
@@ -8,7 +8,7 @@ async function _storeCreate(fields, {c}) {
     try {
         res = await c.insertOne(fields)
     } catch(e) {
-        if (121 === e.code) e = new InvalidData(VALIDATION_FAIL_MSG, e)
+        if (121 === e.code) e = new ValidationError(VALIDATION_FAIL_MSG, e)
         throw e
     }
 
@@ -23,7 +23,7 @@ async function _storeUpdate(id, fields, {c}) {
     try {
         res = await c.updateOne({_id: id}, {$set: fields}, {upsert: false})
     } catch(e) {
-        if (121 === e.code) e = new InvalidData(VALIDATION_FAIL_MSG, e)
+        if (121 === e.code) e = new ValidationError(VALIDATION_FAIL_MSG, e)
         throw e
     }
 
@@ -45,4 +45,4 @@ async function _storeGetById(id, {c}) {
     return res
 }
 
-export {_storeCreate, _storeUpdate, _storeDelete, _storeGetById, InvalidData}
+export {_storeCreate, _storeUpdate, _storeDelete, _storeGetById}

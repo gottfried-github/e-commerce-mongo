@@ -1,5 +1,5 @@
-import {ValidationError} from '../../../bazar-common/messages.js'
-import {InvalidData, ValidationConflict, ValueNotUnique} from '../helpers.js'
+import * as m from '../../../bazar-common/messages.js'
+import {ValidationError, ValidationConflict, ValueNotUnique} from '../helpers.js'
 
 import {generateHash, isEqualHash} from './helpers.js'
 
@@ -15,11 +15,11 @@ async function _create(fields, {create}) {
         id = await create(data)
     } catch(e) {
         if (e instanceof ValueNotUnique) {
-            throw ValidationError.create(e.message, e)
+            throw m.ValidationError.create(e.message, e)
         }
 
         // this must mean the encrypted data is invalid
-        if (e instanceof InvalidData) {
+        if (e instanceof ValidationError) {
             const _e = new ValidationConflict("credentials pass additional validation but builtin validation fails")
             _e.data = e
             e = _e

@@ -1,7 +1,7 @@
 import {ObjectId} from 'bson'
 import * as m from '../../../bazar-common/messages.js'
 
-import {InvalidData, ValidationConflict} from './store.js'
+import {ValidationError, ValidationConflict} from './store.js'
 
 const VALIDATION_CONFLICT_MSG = "mongodb validation fails while model level validation succeeds"
 
@@ -13,7 +13,7 @@ async function _create(fields, {create, validate}) {
     try {
         id = await create(fields)
     } catch(e) {
-        if (!(e instanceof InvalidData)) throw e
+        if (!(e instanceof ValidationError)) throw e
 
         const errors = validate(fields)
 
@@ -49,7 +49,7 @@ async function _update(id, fields, {update, getById, validate, validateObjectId,
         res = await update(id, fields)
     } catch (e) {
         // 121 is validation error: erroneous response example in https://www.mongodb.com/docs/manual/core/schema-validation/#existing-documents
-        if (!(e instanceof InvalidData)) throw e
+        if (!(e instanceof ValidationError)) throw e
 
         // do additional validation only if builtin validation fails. See mongodb with bsonschema: is additional data validation necessary?
         const doc = await getById(id)
