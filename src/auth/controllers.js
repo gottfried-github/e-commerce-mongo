@@ -1,5 +1,7 @@
-import {generateHash} from './helpers.js'
-import {InvalidData} from '../helpers.js'
+import {ValidationError} from '../../../bazar-common/messages.js'
+import {InvalidData, ValidationConflict, ValueNotUnique} from '../helpers.js'
+
+import {generateHash, isEqualHash} from './helpers.js'
 
 async function _create(fields, {create}) {
     // see create: validation logic
@@ -12,9 +14,13 @@ async function _create(fields, {create}) {
     try {
         id = await create(data)
     } catch(e) {
+        if (e instanceof ValueNotUnique) {
+            throw ValidationError.create(e.message, e)
+        }
+
         // this must mean the encrypted data is invalid
         if (e instanceof InvalidData) {
-            const _e = new Error("credentials pass additional validation but builtin validation fails")
+            const _e = new ValidationConflict("credentials pass additional validation but builtin validation fails")
             _e.data = e
             e = _e
         }
@@ -37,7 +43,8 @@ async function _getById(id, {getById, validateObjectId}) {
     const idE = validateObjectId(id)
     if (idE) throw m.InvalidCriterion.create(idE.message, idE)
 
-    const {name, _id} = await getById(id)
+    const {name, _id} = await getById(new ObjectId(id))
+    
     // see User store in bazar-api
     return {name, id: _id}
 }
@@ -50,4 +57,12 @@ async function _getByName(name, password, {getByName}) {
 
     // see User store in bazar-api
     return {name, id: _id}
+}
+
+export {
+    _create,
+    _update,
+    _delete,
+    _getById,
+    _getByName,
 }
