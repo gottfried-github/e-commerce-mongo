@@ -1,7 +1,8 @@
 import {Binary} from 'bson'
 import Ajv from 'ajv'
-
 import {toTree} from 'ajv-errors-to-data-tree'
+
+import * as m from '../../../bazar-common/messages.js'
 import {traverseTree} from 'ajv-errors-to-data-tree/src/helpers.js'
 
 const ajv = new Ajv({allErrors: true, strictRequired: true})
@@ -95,12 +96,12 @@ function _validateBSON(fields) {
     return errors
 }
 
-function validate(fields, {validate, validateBSON}) {
+function validate(fields, {validate, validateBSON, toTree}) {
     if (validate(fields)) {
         return validateBSON(fields)
     }
 
-    const errors = toTree(_validate.errors, () => {
+    const errors = toTree(_validate.errors, (e) => {
         // see Which errors should not occur in the data
         if ('additionalProperties' === e.keyword) throw new Error("data contains fields, not defined in the spec")
 
