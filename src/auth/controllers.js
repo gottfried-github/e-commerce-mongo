@@ -2,22 +2,31 @@ import * as m from '../../../bazar-common/messages.js'
 import {ValidationError, ValidationConflict, ValueNotUnique} from '../helpers.js'
 
 import {generateHash, isEqualHash} from './helpers.js'
+import {validate} from './validate.js'
 
 /**
  * TODO: see "`create`: validate password before writing" and "`create`: binData validation in additional validation"
  * 
 */
 async function _create(fields, {create}) {
-    // see create: validation logic
-    const errors = credentials(fields)
-    if (errors) throw errors
-
     const data = {name: fields.name, ...generateHash(fields.password)}
 
     let id = null
     try {
         id = await create(data)
     } catch(e) {
+        if (e instanceof ValidationError) {
+            const errors = validate(data)
+            
+            if (!errors) {
+                const _e = new ValidationConflict("credentials pass additional validation but builtin validation fails")
+                _e.data = e
+                throw _e
+            }
+
+            throw errors
+        }
+
         if (e instanceof ValueNotUnique) {
             throw {errors: [], node: {
                 name: {
@@ -25,13 +34,6 @@ async function _create(fields, {create}) {
                     node: null
                 }
             }}
-        }
-
-        // this must mean the encrypted data is invalid
-        if (e instanceof ValidationError) {
-            const _e = new ValidationConflict("credentials pass additional validation but builtin validation fails")
-            _e.data = e
-            e = _e
         }
 
         throw e
