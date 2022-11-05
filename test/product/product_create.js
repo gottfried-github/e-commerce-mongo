@@ -1,11 +1,12 @@
 import {assert} from 'chai'
-import * as m from '../../common/messages.js'
+import * as m from '../../../bazar-common/messages.js'
 
-import {_create, ValidationConflict} from '../src/product/controllers.js'
-import {InvalidData} from '../src/product/store.js'
+import {_create} from '../../src/product/controllers.js'
+import {ValidationConflict} from '../../src/helpers.js'
+import {ValidationError} from '../../src/helpers.js'
 
 function testCreate() {
-    describe("create throws a non-InvalidData error", () => {
+    describe("create throws a non-ValidationError error", () => {
         it("throws the error on AND doesn't call any other dependencies", async () => {
             const validateCalls = []
             const ERR_MSG = "an error message"
@@ -29,7 +30,7 @@ function testCreate() {
         })
     })
 
-    describe("create throws an InvalidData", () => {
+    describe("create throws an ValidationError", () => {
         it("validate is called with the 'fields' argument", async () => {
             const fields = "fields"
             let isEqual = null
@@ -37,7 +38,7 @@ function testCreate() {
             // once getById is called, validate should be called and then _create should throw
             try {
                 const res = await _create(fields, {
-                    create: async () => {throw new InvalidData()},
+                    create: async () => {throw new ValidationError()},
                     validate: (_fields) => {
                         isEqual = fields === _fields
                     },
@@ -53,7 +54,7 @@ function testCreate() {
             it("throws ValidationConflict", async () => {
                 try {
                     await _create({}, {
-                        create: async () => {throw new InvalidData()},
+                        create: async () => {throw new ValidationError()},
                         validate: () => {
                             return false
                         },
@@ -72,7 +73,7 @@ function testCreate() {
 
                 try {
                     await _create({}, {
-                        create: async () => {throw new InvalidData()},
+                        create: async () => {throw new ValidationError()},
                         validate: () => {
                             return errors
                         },

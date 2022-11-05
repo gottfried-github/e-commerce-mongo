@@ -1,12 +1,12 @@
 import {assert} from 'chai'
 import {ObjectId} from 'mongodb'
 import {BSONTypeError} from 'bson'
-import {isValidBadInputTree} from '../../helpers.js'
+import {isValidBadInputTree} from '../../../helpers.js'
 
 import {testBSONErrors} from './product-validate_testBSONErrors.js'
 import {testJSONErrors} from './product-validate_testJSONErrors.js'
 
-import {validate} from "../src/product/validate.js"
+import {validate} from "../../src/product/validate.js"
 
 const testsJSON = {
     isInSaleRequired: [{

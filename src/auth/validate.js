@@ -11,7 +11,7 @@ const _validatePsswd = ajv.compile({
     maxLength: 150
 })
 
-const _validateUser = ajv.compile({
+const _validate = ajv.compile({
     type: "object",
     properties: {
         name: {
@@ -47,7 +47,7 @@ function validatePsswd(psswd) {
     return null
 }
 
-function _validateUserBSON(fields) {
+function _validateBSON(fields) {
     const errors = {errors: [], node: {}}
 
     let hashTypeErr = null, saltTypeErr = null,
@@ -95,12 +95,12 @@ function _validateUserBSON(fields) {
     return errors
 }
 
-function validateUser(fields) {
-    if (_validateUser(fields)) {
-        return _validateUserBSON(fields)
+function validate(fields, {validate, validateBSON}) {
+    if (validate(fields)) {
+        return validateBSON(fields)
     }
 
-    const errors = toTree(_validateUser.errors, () => {
+    const errors = toTree(_validate.errors, () => {
         // see Which errors should not occur in the data
         if ('additionalProperties' === e.keyword) throw new Error("data contains fields, not defined in the spec")
 
@@ -113,7 +113,7 @@ function validateUser(fields) {
     // pointless to BSON-validate the fields if they're already invalid (if they are, it must be because they're missing)
     if (errors.node.hash?.errors.length && errors.node.salt?.errors.length) return errors
 
-    const bsonErrors = _validateUserBSON(fields)
+    const bsonErrors = validateBSON(fields)
 
     if (null === bsonErrors) return errors
 
@@ -132,5 +132,5 @@ function validateUser(fields) {
     return errors
 }
 
-export {validatePsswd, validateUser}
+export {validatePsswd, validate, _validate, _validateBSON}
 

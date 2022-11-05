@@ -1,7 +1,7 @@
 import {ObjectId} from 'mongodb'
 
 import {testBSONErrors} from './product-validate_testBSONErrors.js'
-import {_validateBSON} from '../src/product/validate.js'
+import {_validateBSON} from '../../src/product/validate.js'
 
 const id = "an invalid id"
 

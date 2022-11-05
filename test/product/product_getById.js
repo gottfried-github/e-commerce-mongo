@@ -1,12 +1,15 @@
 import {assert} from 'chai'
-import * as m from '../../common/messages.js'
+import {ObjectId} from 'bson'
 
-import {_getById, ValidationConflict} from '../src/product/controllers.js'
+import * as m from '../../../bazar-common/messages.js'
+
+import {_getById} from '../../src/product/controllers.js'
+import {ValidationConflict} from '../../src/helpers.js'
 
 function testGetById() {
     describe("is passed an id", () => {
         it("passes the 'id' argument to validateObjectId", async () => {
-            const id = "an id"
+            const id = new ObjectId()
             let isEqual = null
             await _getById(id, {
                 validateObjectId: (_id) => {isEqual = id === _id},
@@ -45,12 +48,12 @@ function testGetById() {
 
     describe("validateObjectId returns falsy", () => {
         it("getById gets called AND the arguments are passed to it", async () => {
-            const id = "an id", fields = "fields"
+            const id = new ObjectId().toString(), fields = "fields"
             let isEqual = null
 
             await _getById(id, {
                 validateObjectId: () => {return false},
-                getById: async (_id) => {isEqual = id === _id},
+                getById: async (_id) => {isEqual = id === _id.toString()},
             })
 
             assert.strictEqual(isEqual, true)
@@ -59,14 +62,14 @@ function testGetById() {
 
     describe("getById returns", () => {
         it("returns the returned value", async () => {
-            const data = "some data"
+            const data = new ObjectId()
 
-            const res = await _getById("", {
+            const res = await _getById(data.toString(), {
                 validateObjectId: () => {return false},
                 getById: async () => {return data},
             })
 
-            assert.strictEqual(res, data)
+            assert.strictEqual(res.toString(), data.toString())
         })
     })
 }
