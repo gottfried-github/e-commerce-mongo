@@ -87,9 +87,9 @@ function _validateBSON(fields) {
     }
 
     if (saltBinErr) {
-        if (!('hash' in errors.node)) errors.node.hash = {errors: [], node: null}
+        if (!('salt' in errors.node)) errors.node.salt = {errors: [], node: null}
 
-        errors.node.hash.errors.push(m.ValidationError.create(`salt is invalid binData`, hashBinErr))
+        errors.node.salt.errors.push(m.ValidationError.create(`salt is invalid binData`, saltBinErr))
     }
 
     if (!hashBinErr && !saltBinErr) return null
