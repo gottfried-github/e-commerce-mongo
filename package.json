@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test:product": "mocha test/product/product.js",
-    "test:auth": "mocha test/auth/auth-validate.js"
+    "test:auth-validate": "mocha test/auth/auth-validate.js"
   },
   "repository": {
     "type": "git",
