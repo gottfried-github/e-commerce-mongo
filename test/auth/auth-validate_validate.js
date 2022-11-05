@@ -72,6 +72,54 @@ function testValidate() {
             assert.strictEqual(validateBSONCalled, false)
         })
     })
+
+    describe('one of hash and salt is json-invalid', () => {
+        it('calls validateBSON with passed fields', () => {
+            let validateBSONCalled = false
+
+            validate({name: "abcdefghi", salt: new Binary('abcdefg')}, {
+                validate: _validate,
+                validateBSON: () => {validateBSONCalled = true; return {node: {}}},
+                toTree
+            })
+
+            assert.strictEqual(validateBSONCalled, true)
+        })
+
+        it('has validateBSON-generated errors in returned errors', () => {
+            const err = "some error"
+
+            const res = validate({name: "abcdefghi", salt: 5}, {
+                validate: _validate,
+                validateBSON: () => {return {node: {salt: {errors: [err], node: null}}}},
+                toTree
+            })
+
+            assert.strictEqual(res.node.salt?.errors[0], err)
+        })
+    })
+
+    describe('one of hash and salt is json-invalid and name is json-invald', () => {
+        it('returned errors contain both validateBSON-generated errors and ajv-generated error', () => {
+            const err = "some error"
+
+            const res = validate({name: "abc", hash: new Binary('abc'), salt: 5}, {
+                validate: _validate,
+                validateBSON: () => {return {node: {salt: {errors: [err], node: null}}}},
+                toTree
+            })
+
+            const keys = Object.keys(res.node)
+
+            assert(
+                keys.length === 2 &&
+                keys.includes('name') && keys.includes('salt') &&
+                
+                res.node.salt.errors.length === 1 && 
+                res.node.salt.errors[0] === err
+            )
+        })
+    })
 }
 
 export {testValidate}
