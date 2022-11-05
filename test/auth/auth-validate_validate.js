@@ -1,7 +1,8 @@
-import {Binary} from 'bson'
+import {Binary, BSONTypeError} from 'bson'
 import {assert} from 'chai'
 
 import {toTree} from 'ajv-errors-to-data-tree'
+import * as m from '../../../bazar-common/messages.js'
 
 import {validate, _validate, _validateBSON} from '../../src/auth/validate.js'
 
@@ -122,4 +123,44 @@ function testValidate() {
     })
 }
 
-export {testValidate}
+function testValidateBSON() {
+    describe('hash - wrong type; salt - empty', () => {
+        it('returns both errors', () => {
+            const res = _validateBSON({hash: undefined, salt: ''})
+
+            const keys = Object.keys(res.node)
+            
+            assert(
+                keys.length === 2 &&
+                keys.includes('hash') && keys.includes('salt') &&
+
+                res.node.hash.errors.length === 1 &&
+                m.TypeErrorMsg.code === res.node.hash.errors[0].code &&
+
+                res.node.salt.errors.length === 1 &&
+                m.ValidationError.code === res.node.salt.errors[0].code
+            )
+        })
+    })
+
+    describe('hash - wrong type, salt - invalid binData', () => {
+        it('returns both errors', () => {
+            const res = _validateBSON({hash: undefined, salt: 5})
+
+            const keys = Object.keys(res.node)
+            
+            assert(
+                keys.length === 2 &&
+                keys.includes('hash') && keys.includes('salt') &&
+
+                res.node.hash.errors.length === 1 &&
+                m.TypeErrorMsg.code === res.node.hash.errors[0].code &&
+
+                res.node.salt.errors.length === 1 &&
+                res.node.salt.errors[0].data instanceof BSONTypeError
+            )
+        })
+    })
+}
+
+export {testValidate, testValidateBSON}
