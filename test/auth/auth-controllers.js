@@ -1,5 +1,11 @@
-import {testCreate} from './auth_controllers.js'
+import {testCreate, testGetById} from './auth_controllers.js'
 
 describe('controllers', () => {
-    testCreate()
+    describe('_create', () => {
+        testCreate()
+    })
+
+    describe('_getById', () => {
+        testGetById()
+    })
 })

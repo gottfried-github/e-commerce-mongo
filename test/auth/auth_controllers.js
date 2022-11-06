@@ -1,8 +1,10 @@
 import {assert} from 'chai'
+import {ObjectId} from 'bson'
+
 import * as m from '../../../bazar-common/messages.js'
 import {ValidationError, ValueNotUnique, ValidationConflict} from '../../src/helpers.js'
 
-import {_create} from '../../src/auth/controllers.js'
+import {_create, _getById} from '../../src/auth/controllers.js'
 
 function testCreate() {
     describe('called', () => {
@@ -112,4 +114,20 @@ function testCreate() {
     })
 }
 
-export {testCreate}
+function testGetById() {
+    describe("is passed an id", () => {
+        it("passes the id to validateObjectId", async () => {
+            const id = new ObjectId()
+            let isEqual = null
+
+            await _getById(id, {
+                validateObjectId: (_id) => {isEqual = id === _id},
+                getById: async () => {return {name: 'name', _id: 'id'}},
+            })
+
+            assert.strictEqual(isEqual, true)
+        })
+    })
+}
+
+export {testCreate, testGetById}
