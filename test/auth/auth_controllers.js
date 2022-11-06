@@ -1,6 +1,10 @@
 import {assert} from 'chai'
+import {ObjectId} from 'bson'
 
-import {_create} from '../../src/auth/controllers.js'
+import * as m from '../../../bazar-common/messages.js'
+import {ValidationError, ValueNotUnique, ValidationConflict} from '../../src/helpers.js'
+
+import {_create, _getById} from '../../src/auth/controllers.js'
 
 function testCreate() {
     describe('called', () => {
@@ -21,16 +25,192 @@ function testCreate() {
         })
     })
     
-    // describe('create cb returns', () => {
-    //     it('returns the value, returned by create', async () => {
-    //         const res = await _create({}, {
-    //             generateHash: () => {},
-    //             create: async () => {
-    //                 return "some id"
-    //             }
-    //         })
-    //     })
-    // })
+    describe("'create' cb returns", () => {
+        it("returns the value, returned by 'create' cb", async () => {
+            const data = "some data"
+            const res = await _create({}, {
+                generateHash: () => {},
+                create: async () => {
+                    return data
+                }
+            })
+
+            assert.strictEqual(res, data)
+        })
+    })
+
+    describe("'create' cb throws ValidationError", () => {
+        it('calls validate', async () => {
+            let isCalled = false
+            
+            try {
+                await _create({}, {
+                    create: async () => {throw new ValidationError("some message")},
+                    validate: () => {isCalled = true; return "some errors"},
+                    generateHash: () => {}
+                })
+            } catch (e) {}
+
+            assert.strictEqual(isCalled, true)
+        })
+
+        describe('validate returns null', () => {
+            it('throws ValidationConflict', async () => {
+                try {
+                    await _create({}, {
+                        create: async () => {throw new ValidationError("some message")},
+                        validate: () => {return null},
+                        generateHash: () => {}
+                    })
+                } catch (e) {
+                    return assert(e instanceof ValidationConflict)
+                }
+
+                assert.fail("didn't throw")
+            })
+        })
+
+        describe('validate returns data', () => {
+            it('throws the data', async () => {
+                let data = "some errors"
+            
+                try {
+                    await _create({}, {
+                        create: async () => {throw new ValidationError("some message")},
+                        validate: () => {return data},
+                        generateHash: () => {}
+                    })
+                } catch (e) {
+                    return assert.strictEqual(e, data)
+                }
+
+                assert.fail("didn't throw")
+            })
+        })
+    })
+
+    describe("'create' cb throws ValueNotUnique", async () => {
+        it('throws ValidationError', async () => {
+            const fieldName = 'name'
+
+            try {
+                await _create({}, {
+                    create: async () => {throw new ValueNotUnique("some message", {field: fieldName})},
+                    validate: () => {},
+                    generateHash: () => {}
+                })
+            } catch (e) {
+                return assert(
+                    fieldName in e.node &&
+                    e.node[fieldName].errors.length === 1 &&
+                    e.node[fieldName].errors[0].code === m.ValidationError.code
+                )
+            }
+
+            assert.fail("didn't throw")
+        })
+    })
 }
 
-export {testCreate}
+function testGetById() {
+    describe("is passed an id", () => {
+        it("passes the id to validateObjectId", async () => {
+            const id = new ObjectId()
+            let isEqual = null
+
+            await _getById(id, {
+                validateObjectId: (_id) => {isEqual = id === _id},
+                getById: async () => {return {name: 'name', _id: 'id'}},
+            })
+
+            assert.strictEqual(isEqual, true)
+        })
+    })
+
+    describe('validateObjectId returns truthy', () => {
+        it("throws InvalidCriterion with the returned value as data", async () => {
+            const idE = "an error with id"
+            
+            try {
+                await _getById("", {
+                    validateObjectId: () => {return idE},
+                    getById: async () => {},
+                })
+            } catch(e) {
+                return assert(
+                    // error is an InvalidCriterion
+                    m.InvalidCriterion.code === e.code && 
+                    idE === e.data
+                )
+            }
+
+            assert.fail("_getById didn't throw")
+        })
+
+        it("doesn't call any other dependencies", async () => {
+            const getByIdCalls = []
+
+            try {
+                await _getById("", {
+                    validateObjectId: () => {return idE},
+                    getById: async () => {getByIdCalls.push(null)},
+                })
+            } catch(e) {
+                return assert.strictEqual(getByIdCalls.length, 0)
+            }
+
+            assert.fail("_getById didn't throw")
+        })
+    })
+
+    describe('validateObjectId returns falsy', () => {
+        it("calls 'getById' cb", async () => {
+            let isCalled = false
+
+            await _getById(new ObjectId(), {
+                validateObjectId: () => false,
+                getById: () => {isCalled = true; return {name: 'name', _id: 'id'}},
+            })
+
+            assert.strictEqual(isCalled, true)
+        })
+
+        it("passes instance of ObjectId to 'getById'", async () => {
+            let isInstance = false
+
+            await _getById(new ObjectId().toString(), {
+                validateObjectId: () => false,
+                getById: (id) => {isInstance = id instanceof ObjectId; return {name: 'name', _id: 'id'}},
+            })
+
+            assert.strictEqual(isInstance, true)
+        })
+
+        it("passes to 'getById' it's input id", async () => {
+            const id = new ObjectId()
+            let isEqual = false
+
+            await _getById(id, {
+                validateObjectId: () => false,
+                getById: (_id) => {isEqual = id.toString() === _id.toString(); return {name: 'name', _id: 'id'}},
+            })
+
+            assert.strictEqual(isEqual, true)
+        })
+    })
+
+    describe("'getById' returns data", () => {
+        it('returns the same data', async () => {
+            const dataExpected = {name: "some name", id: "some id"}
+
+            const res = await _getById(new ObjectId(), {
+                validateObjectId: () => false,
+                getById: () => {return {name: dataExpected.name, _id: dataExpected.id}},
+            })
+
+            assert.deepEqual(res, dataExpected)
+        })
+    })
+}
+
+export {testCreate, testGetById}

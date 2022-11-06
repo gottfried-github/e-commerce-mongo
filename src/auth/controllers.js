@@ -1,3 +1,5 @@
+import {ObjectId} from 'bson'
+
 import * as m from '../../../bazar-common/messages.js'
 import {ValidationError, ValidationConflict, ValueNotUnique} from '../helpers.js'
 
