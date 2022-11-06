@@ -93,24 +93,25 @@ function testCreate() {
     })
 
     describe("'create' cb throws ValueNotUnique", async () => {
-        const fieldName = 'name'
-        let e = null
+        it('throws ValidationError', async () => {
+            const fieldName = 'name'
 
-        try {
-            await _create({}, {
-                create: async () => {throw new ValueNotUnique("some message", {field: fieldName})},
-                validate: () => {},
-                generateHash: () => {}
-            })
-        } catch (_e) {
-            e = _e
-        }
+            try {
+                await _create({}, {
+                    create: async () => {throw new ValueNotUnique("some message", {field: fieldName})},
+                    validate: () => {},
+                    generateHash: () => {}
+                })
+            } catch (e) {
+                return assert(
+                    fieldName in e.node &&
+                    e.node[fieldName].errors.length === 1 &&
+                    e.node[fieldName].errors[0].code === m.ValidationError.code
+                )
+            }
 
-        assert(
-            fieldName in e.node &&
-            e.node[fieldName].errors.length === 1 &&
-            e.node.errors[0].code === m.ValidationError.code
-        )
+            assert.fail("didn't throw")
+        })
     })
 }
 
