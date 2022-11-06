@@ -8,7 +8,7 @@ import {validate} from './validate.js'
  * TODO: see "`create`: validate password before writing" and "`create`: binData validation in additional validation"
  * 
 */
-async function _create(fields, {create, generateHash}) {
+async function _create(fields, {create, validate, generateHash}) {
     const data = {name: fields.name, ...generateHash(fields.password)}
 
     let id = null
