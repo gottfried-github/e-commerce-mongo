@@ -59,14 +59,14 @@ async function _getById(id, {getById, validateObjectId}) {
     return {name, id: _id}
 }
 
-async function _getByName(name, password, {getByName}) {
+async function _getByName(name, password, {getByName, isEqualHash}) {
     const doc = await getByName(name)
 
     // see Exposing password data
     if (!isEqualHash(doc.salt.buffer, doc.hash.buffer, password)) throw m.InvalidCriterion.create("password is incorrect")
 
     // see User store in bazar-api
-    return {name, id: _id}
+    return {name: doc.name, id: doc._id}
 }
 
 export {
