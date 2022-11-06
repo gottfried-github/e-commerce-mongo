@@ -128,6 +128,42 @@ function testGetById() {
             assert.strictEqual(isEqual, true)
         })
     })
+
+    describe('validateObjectId returns truthy', () => {
+        it("throws InvalidCriterion with the returned value as data", async () => {
+            const idE = "an error with id"
+            
+            try {
+                await _getById("", {
+                    validateObjectId: () => {return idE},
+                    getById: async () => {},
+                })
+            } catch(e) {
+                return assert(
+                    // error is an InvalidCriterion
+                    m.InvalidCriterion.code === e.code && 
+                    idE === e.data
+                )
+            }
+
+            assert.fail("_getById didn't throw")
+        })
+
+        it("doesn't call any other dependencies", async () => {
+            const getByIdCalls = []
+
+            try {
+                await _getById("", {
+                    validateObjectId: () => {return idE},
+                    getById: async () => {getByIdCalls.push(null)},
+                })
+            } catch(e) {
+                return assert.strictEqual(getByIdCalls.length, 0)
+            }
+
+            assert.fail("_getById didn't throw")
+        })
+    })
 }
 
 export {testCreate, testGetById}
