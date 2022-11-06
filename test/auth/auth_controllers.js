@@ -1,4 +1,5 @@
 import {assert} from 'chai'
+import * as m from '../../../bazar-common/messages.js'
 import {ValidationError, ValueNotUnique, ValidationConflict} from '../../src/helpers.js'
 
 import {_create} from '../../src/auth/controllers.js'
@@ -87,6 +88,27 @@ function testCreate() {
                 assert.strictEqual(isEqual, true)
             })
         })
+    })
+
+    describe("'create' cb throws ValueNotUnique", async () => {
+        const fieldName = 'name'
+        let e = null
+
+        try {
+            await _create({}, {
+                create: async () => {throw new ValueNotUnique("some message", {field: fieldName})},
+                validate: () => {},
+                generateHash: () => {}
+            })
+        } catch (_e) {
+            e = _e
+        }
+
+        assert(
+            fieldName in e.node &&
+            e.node[fieldName].errors.length === 1 &&
+            e.node.errors[0].code === m.ValidationError.code
+        )
     })
 }
 
