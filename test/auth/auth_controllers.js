@@ -1,10 +1,10 @@
 import {assert} from 'chai'
-import {ObjectId} from 'bson'
+import {ObjectId, Binary} from 'bson'
 
 import * as m from '../../../bazar-common/messages.js'
 import {ValidationError, ValueNotUnique, ValidationConflict} from '../../src/helpers.js'
 
-import {_create, _getById} from '../../src/auth/controllers.js'
+import {_create, _getById, _getByName} from '../../src/auth/controllers.js'
 
 function testCreate() {
     describe('called', () => {
@@ -213,4 +213,70 @@ function testGetById() {
     })
 }
 
-export {testCreate, testGetById}
+function testGetByName() {
+    describe("is called with arguments", () => {
+        it("calls getByName with the 'name'", async () => {
+            const name = 'name'
+            let isEqual = false
+
+            await _getByName(name, 'some psswd', {
+                getByName: async (_name) => {
+                    isEqual = name === _name
+                    return {hash: new Binary('whatev'), salt: new Binary('whatev')}
+                },
+                isEqualHash: () => true
+            })
+
+            assert.strictEqual(isEqual, true)
+        })
+    })
+
+    describe("getByName returns Binary data", () => {
+        it("calls isEqualHash with the data", async () => {
+            const salt = new Binary('abc'), hash = new Binary('def')
+            let isEqual = false
+
+            await _getByName("name", "psswd", {
+                getByName: () => {return {salt, hash}},
+                isEqualHash: (_salt, _hash) => {
+                    isEqual = salt.buffer === _salt && hash.buffer === _hash
+                    return true
+                }
+            })
+
+            assert.strictEqual(isEqual, true)
+        })
+    })
+
+    describe("isEqualHash returns falsy", () => {
+        it("throws InvalidCriterion", async () => {
+            try {
+                await _getByName("name", "psswd", {
+                    getByName: () => {
+                        return {hash: new Binary('whatev'), salt: new Binary('whatev')}
+                    },
+                    isEqualHash: (_salt, _hash) => false
+                })
+            } catch(e) {
+                return assert.strictEqual(e.code, m.InvalidCriterion.code)
+            }
+
+            assert.fail("didn't throw")
+        })
+    })
+
+    describe("isEqualHash returns truthy", () => {
+        it("returns data from getByName", async () => {
+            const _id = "id", name = "name", hash = new Binary('whatev'), salt = new Binary('whatev')
+
+            const res = await _getByName("whatev", "psswd", {
+                getByName: () => {return {_id, name, hash, salt}},
+                isEqualHash: () => true
+            })
+
+            assert.deepEqual(res, {name, id: _id})
+        })
+    })
+}
+
+export {testCreate, testGetById, testGetByName}

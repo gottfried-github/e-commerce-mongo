@@ -1,4 +1,4 @@
-import {testCreate, testGetById} from './auth_controllers.js'
+import {testCreate, testGetById, testGetByName} from './auth_controllers.js'
 
 describe('controllers', () => {
     describe('_create', () => {
@@ -7,5 +7,9 @@ describe('controllers', () => {
 
     describe('_getById', () => {
         testGetById()
+    })
+    
+    describe('_getByName', () => {
+        testGetByName()
     })
 })
