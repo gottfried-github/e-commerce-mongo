@@ -28,12 +28,9 @@ async function _create(fields, {create}) {
         }
 
         if (e instanceof ValueNotUnique) {
-            throw {errors: [], node: {
-                name: {
-                    errors: [m.ValidationError.create(e.message, e)],
-                    node: null
-                }
-            }}
+            const errors = {errors: [], node: {[e.data.field || 'unknown']: {errors: [m.ValidationError.create(e.message, e)], node: null}}}
+
+            throw errors
         }
 
         throw e

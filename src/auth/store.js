@@ -6,7 +6,7 @@ async function _storeCreate(fields, {c}) {
         res = await c.insertOne(fields)
     } catch(e) {
         if (121 === e.code) throw new ValidationError("invalid data", e)
-        if (11000 === e.code) throw new ValueNotUnique("given user name already exists", e)
+        if (11000 === e.code) throw new ValueNotUnique("given user name already exists", {field: Object.keys(e.keyValue)[0], originalErr: e})
     }
 
     return res.insertedId
