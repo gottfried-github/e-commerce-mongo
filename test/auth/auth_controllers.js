@@ -56,8 +56,6 @@ function testCreate() {
 
         describe('validate returns null', () => {
             it('throws ValidationConflict', async () => {
-                let properErr = false
-
                 try {
                     await _create({}, {
                         create: async () => {throw new ValidationError("some message")},
@@ -65,17 +63,16 @@ function testCreate() {
                         generateHash: () => {}
                     })
                 } catch (e) {
-                    properErr = e instanceof ValidationConflict
+                    return assert(e instanceof ValidationConflict)
                 }
 
-                assert.strictEqual(properErr, true)
+                assert.fail("didn't throw")
             })
         })
 
         describe('validate returns data', () => {
             it('throws the data', async () => {
-                let data = "some errors",
-                isEqual = false
+                let data = "some errors"
             
                 try {
                     await _create({}, {
@@ -84,10 +81,10 @@ function testCreate() {
                         generateHash: () => {}
                     })
                 } catch (e) {
-                    isEqual = e === data
+                    return assert.strictEqual(e, data)
                 }
 
-                assert.strictEqual(isEqual, true)
+                assert.fail("didn't throw")
             })
         })
     })
