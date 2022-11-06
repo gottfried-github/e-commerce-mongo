@@ -162,6 +162,55 @@ function testGetById() {
             assert.fail("_getById didn't throw")
         })
     })
+
+    describe('validateObjectId returns falsy', () => {
+        it("calls 'getById' cb", async () => {
+            let isCalled = false
+
+            await _getById(new ObjectId(), {
+                validateObjectId: () => false,
+                getById: () => {isCalled = true; return {name: 'name', _id: 'id'}},
+            })
+
+            assert.strictEqual(isCalled, true)
+        })
+
+        it("passes instance of ObjectId to 'getById'", async () => {
+            let isInstance = false
+
+            await _getById(new ObjectId().toString(), {
+                validateObjectId: () => false,
+                getById: (id) => {isInstance = id instanceof ObjectId; return {name: 'name', _id: 'id'}},
+            })
+
+            assert.strictEqual(isInstance, true)
+        })
+
+        it("passes to 'getById' it's input id", async () => {
+            const id = new ObjectId()
+            let isEqual = false
+
+            await _getById(id, {
+                validateObjectId: () => false,
+                getById: (_id) => {isEqual = id.toString() === _id.toString(); return {name: 'name', _id: 'id'}},
+            })
+
+            assert.strictEqual(isEqual, true)
+        })
+    })
+
+    describe("'getById' returns data", () => {
+        it('returns the same data', async () => {
+            const dataExpected = {name: "some name", id: "some id"}
+
+            const res = await _getById(new ObjectId(), {
+                validateObjectId: () => false,
+                getById: () => {return {name: dataExpected.name, _id: dataExpected.id}},
+            })
+
+            assert.deepEqual(res, dataExpected)
+        })
+    })
 }
 
 export {testCreate, testGetById}
