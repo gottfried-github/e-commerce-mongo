@@ -1,5 +1,5 @@
 import {assert} from 'chai'
-import {ValidationError, ValueNotUnique} from '../../src/helpers.js'
+import {ValidationError, ValueNotUnique, ValidationConflict} from '../../src/helpers.js'
 
 import {_create} from '../../src/auth/controllers.js'
 
@@ -49,6 +49,43 @@ function testCreate() {
             } catch (e) {}
 
             assert.strictEqual(isCalled, true)
+        })
+
+        describe('validate returns null', () => {
+            it('throws ValidationConflict', async () => {
+                let properErr = false
+
+                try {
+                    await _create({}, {
+                        create: async () => {throw new ValidationError("some message")},
+                        validate: () => {return null},
+                        generateHash: () => {}
+                    })
+                } catch (e) {
+                    properErr = e instanceof ValidationConflict
+                }
+
+                assert.strictEqual(properErr, true)
+            })
+        })
+
+        describe('validate returns data', () => {
+            it('throws the data', async () => {
+                let data = "some errors",
+                isEqual = false
+            
+                try {
+                    await _create({}, {
+                        create: async () => {throw new ValidationError("some message")},
+                        validate: () => {return data},
+                        generateHash: () => {}
+                    })
+                } catch (e) {
+                    isEqual = e === data
+                }
+
+                assert.strictEqual(isEqual, true)
+            })
         })
     })
 }
