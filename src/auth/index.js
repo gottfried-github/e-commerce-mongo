@@ -3,7 +3,7 @@ import {validateObjectId} from '../helpers.js'
 
 import {validate} from './validate.js'
 
-import {_storeCreate, _storeUpdate, _storeDelete, _storeGetById, _storeGetByName} from './store.js'
+import {_storeCreate, _storeGetById, _storeGetByName} from './store.js'
 import {_create, _getById, _getByName} from './controllers.js'
 
 function Auth(c) {
@@ -20,8 +20,8 @@ function Auth(c) {
     }
 
     return {
-        create: (id, fields) => {
-            return _create(id, fileds, {create: storeCreate, validate, generateHash})
+        create: (fields) => {
+            return _create(fields, {create: storeCreate, validate, generateHash})
         },
 
         getById: (id) => {
