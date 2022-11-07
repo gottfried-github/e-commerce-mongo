@@ -33,3 +33,5 @@ function Auth(c) {
         }
     }
 }
+
+export default Auth
