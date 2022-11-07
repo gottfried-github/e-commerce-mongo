@@ -41,13 +41,13 @@ async function _create(fields, {create, validate, generateHash}) {
     return id
 }
 
-async function _update() {
+// async function _update() {
 
-}
+// }
 
-async function _delete() {
+// async function _delete() {
     
-}
+// }
 
 async function _getById(id, {getById, validateObjectId}) {
     const idE = validateObjectId(id)
@@ -71,8 +71,6 @@ async function _getByName(name, password, {getByName, isEqualHash}) {
 
 export {
     _create,
-    _update,
-    _delete,
     _getById,
     _getByName,
 }

@@ -12,13 +12,13 @@ async function _storeCreate(fields, {c}) {
     return res.insertedId
 }
 
-async function _storeUpdate() {
+// async function _storeUpdate() {
 
-}
+// }
 
-async function _storeDelete() {
+// async function _storeDelete() {
 
-}
+// }
 
 async function _storeGetById(id, {c}) {
     const res = await c.findOne({_id: id})
@@ -32,8 +32,6 @@ async function _storeGetByName(name, {c}) {
 
 export {
     _storeCreate,
-    _storeDelete,
-    _storeUpdate,
     _storeGetById,
     _storeGetByName,
 }
