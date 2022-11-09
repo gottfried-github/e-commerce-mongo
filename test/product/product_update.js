@@ -1,8 +1,9 @@
 import {assert} from 'chai'
-import * as m from '../../common/messages.js'
+import * as m from '../../../bazar-common/messages.js'
 
-import {InvalidData} from '../src/product/store.js'
-import {_update, ValidationConflict} from '../src/product/controllers.js'
+import {ValidationError} from '../../src/helpers.js'
+import {_update} from '../../src/product/controllers.js'
+import {ValidationConflict} from '../../src/helpers.js'
 
 function testUpdate() {
     describe("is passed an id", () => {
@@ -93,7 +94,7 @@ function testUpdate() {
         })
     })
 
-    describe("update throws a non-InvalidData error", () => {
+    describe("update throws a non-ValidationError error", () => {
         it("throws the error on AND doesn't call any other dependencies", async () => {
             const ERR_MSG = "an error message"
 
@@ -116,7 +117,7 @@ function testUpdate() {
         })
     })
 
-    describe("update throws an InvalidData", () => {
+    describe("update throws an ValidationError", () => {
         it("getById is called with the 'id' argument", async () => {
             const id = "an id"
             let isEqual = null
@@ -124,7 +125,7 @@ function testUpdate() {
             // once getById is called, validate should be called and then _update should throw
             try {
                 const res = await _update(id, {}, {
-                    update: async () => {throw new InvalidData()},
+                    update: async () => {throw new ValidationError()},
                     getById: async (_id) => {isEqual = id === _id},
                     validate: () => {return true},
                     validateObjectId: () => {return false},
@@ -144,7 +145,7 @@ function testUpdate() {
             // once getById is called, validate should be called and then _update should throw
             try {
                 const res = await _update("", fields, {
-                    update: async () => {throw new InvalidData()},
+                    update: async () => {throw new ValidationError()},
                     getById: async () => {return doc},
                     validate: (_fields) => {
                         const keys = Object.keys(_fields)
@@ -165,7 +166,7 @@ function testUpdate() {
             it("throws ValidationConflict", async () => {
                 try {
                     await _update("", {}, {
-                        update: async () => {throw new InvalidData()},
+                        update: async () => {throw new ValidationError()},
                         getById: async () => {return true},
                         validate: () => {
                             return false
@@ -187,7 +188,7 @@ function testUpdate() {
 
                 try {
                     await _update("", {}, {
-                        update: async () => {throw new InvalidData()},
+                        update: async () => {throw new ValidationError()},
                         getById: async () => {return true},
                         validate: () => {
                             return errors

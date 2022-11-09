@@ -3,7 +3,7 @@ import {assert} from 'chai'
 import {ObjectId} from 'mongodb'
 import {BSONTypeError} from "bson"
 
-import {_validateBSON} from '../src/product/validate.js'
+import {_validateBSON} from '../../src/product/validate.js'
 
 // import {toTree} from 'ajv-errors-to-data-tree'
 const id = "an invalid id"

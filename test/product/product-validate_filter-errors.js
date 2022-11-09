@@ -1,7 +1,7 @@
 import {toTree} from 'ajv-errors-to-data-tree'
 import {testJSONErrors} from './product-validate_testJSONErrors.js'
 
-import {filterErrors, _validate} from '../src/product/validate.js'
+import {filterErrors, _validate} from '../../src/product/validate.js'
 
 function testFilterErrors() {
     const tests = {

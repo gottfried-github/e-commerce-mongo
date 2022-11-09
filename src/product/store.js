@@ -1,7 +1,6 @@
-import {ObjectId} from 'bson'
+import {ValidationError} from '../helpers.js'
 
 const VALIDATION_FAIL_MSG = "data validation failed"
-class InvalidData extends Error {constructor(message, data, ...args) {super(message, ...args); this.data = data}}
 
 async function _storeCreate(fields, {c}) {
     let res = null
@@ -9,7 +8,7 @@ async function _storeCreate(fields, {c}) {
     try {
         res = await c.insertOne(fields)
     } catch(e) {
-        if (121 === e.code) e = new InvalidData(VALIDATION_FAIL_MSG, e)
+        if (121 === e.code) e = new ValidationError(VALIDATION_FAIL_MSG, e)
         throw e
     }
 
@@ -24,7 +23,7 @@ async function _storeUpdate(id, fields, {c}) {
     try {
         res = await c.updateOne({_id: id}, {$set: fields}, {upsert: false})
     } catch(e) {
-        if (121 === e.code) e = new InvalidData(VALIDATION_FAIL_MSG, e)
+        if (121 === e.code) e = new ValidationError(VALIDATION_FAIL_MSG, e)
         throw e
     }
 
@@ -42,8 +41,8 @@ async function _storeDelete(id, {c}) {
 }
 
 async function _storeGetById(id, {c}) {
-    const res = await c.findOne({_id: new ObjectId(id)})
+    const res = await c.findOne({_id: id})
     return res
 }
 
-export {_storeCreate, _storeUpdate, _storeDelete, _storeGetById, InvalidData}
+export {_storeCreate, _storeUpdate, _storeDelete, _storeGetById}

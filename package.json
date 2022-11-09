@@ -5,7 +5,9 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "test": "mocha test/product.js"
+    "test:product": "mocha test/product/product.js",
+    "test:auth-validate": "mocha test/auth/auth-validate.js",
+    "test:auth-controllers": "mocha test/auth/auth-controllers.js"
   },
   "repository": {
     "type": "git",

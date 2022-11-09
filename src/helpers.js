@@ -2,6 +2,10 @@ import {ObjectId} from 'mongodb'
 import {traverseTree} from 'ajv-errors-to-data-tree/src/helpers.js'
 import * as m from '../../bazar-common/messages.js'
 
+class ValidationError extends Error {constructor(message, data, ...args) {super(message, ...args); this.data = data}}
+class ValidationConflict extends Error {constructor(message, data, ...args) {super(message, ...args); this.data = data}}
+class ValueNotUnique extends Error {constructor(message, data, ...args) {super(message, ...args); this.data = data}}
+
 function _parseFirstOneOfItemPath(schemaPath) {
     const nodeNames = schemaPath.split('/')
     if (0 === nodeNames[0].length) nodeNames.shift()
@@ -40,4 +44,4 @@ function containsId(data) {
     return '_id' in data ? '_id' : false
 }
 
-export {_parseFirstOneOfItemPath, validateObjectId, containsId}
+export {_parseFirstOneOfItemPath, validateObjectId, containsId, ValidationError, ValidationConflict, ValueNotUnique}
