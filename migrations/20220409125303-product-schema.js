@@ -1,37 +1,38 @@
-const productOtherProps = {
-    name: {
-        bsonType: "string"
+const rest = {
+    _id: {bsonType: 'objectId'},
+    name: {bsonType: "string", minLength: 3, maxLength: 150},
+    price: {bsonType: "number", minimum: 0, maximum: 1000000},
+    is_in_stock: {bsonType: "bool"},
+    photos: {bsonType: "array", maxItems: 150, minItems: 1, items: {
+        bsonType: "string",
+        minLength: 1,
+        maxLength: 1000,
+    }},
+    cover_photo: {
+        bsonType: "string", minLength: 1, maxLength: 1000
     },
-    itemInitial: {
-        bsonType: "string"
-    },
-    _id: {bsonType: "objectId"}
+    description: {bsonType: "string", minLength: 1, maxLength: 15000}
 }
 
-const product = {
+const schema = {
     oneOf: [
         {
             bsonType: "object",
             properties: {
-                isInSale: {
-                    bsonType: "bool",
-                    enum: [true]
-                },
-                ...productOtherProps
+                expose: {bsonType: "bool", enum: [true]},
+                ...rest
             },
-            required: ["isInSale", "name", "itemInitial", "_id"]
+            required: ['expose', 'name', 'price', 'is_in_stock', 'photos', 'cover_photo', 'description', '_id'],
+            additionalProperties: false
         },
         {
             bsonType: "object",
             properties: {
-                _id: {bsonType: "objectId"},
-                isInSale: {
-                    bsonType: "bool",
-                    enum: [false]
-                },
-                ...productOtherProps
+                expose: {bsonType: "bool", enum: [false]},
+                ...rest,
             },
-            required: ["isInSale", "_id"]
+            required: ['expose', '_id'],
+            additionalProperties: false
         }
     ]
 }
@@ -44,7 +45,7 @@ module.exports = {
     // await db.collection('albums').updateOne({artist: 'The Beatles'}, {$set: {blacklisted: true}});
 
     return db.createCollection("product", {validator: {
-        $jsonSchema: product
+        $jsonSchema: schema
     }})
   },
   async down(db, client) {
@@ -54,5 +55,5 @@ module.exports = {
 
     db.dropCollection("product")
   },
-  schemas: {product}
+  schema
 };

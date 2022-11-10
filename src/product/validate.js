@@ -13,17 +13,17 @@ const ajv = new Ajv({allErrors: true, strictRequired: true})
 const rest = {
     _id: {},
     name: {type: "string", minLength: 3, maxLength: 150},
-    price: {type: "number", minimum: 0},
+    price: {type: "number", minimum: 0, maximum: 1000000},
     is_in_stock: {type: "boolean"},
     photos: {type: "array", maxItems: 150, minItems: 1, items: {
         type: "string",
         minLength: 1,
-        maxLength: 150,
+        maxLength: 1000,
     }},
     cover_photo: {
-        type: "string", minLength: 1, maxLength: 150
+        type: "string", minLength: 1, maxLength: 1000
     },
-    description: {type: "string", minLength: 1, maxLength: 150}
+    description: {type: "string", minLength: 1, maxLength: 15000}
 }
 
 const schema = {
