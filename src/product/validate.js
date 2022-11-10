@@ -4,19 +4,26 @@ import {ObjectId} from 'mongodb'
 import {toTree} from 'ajv-errors-to-data-tree'
 import {traverseTree} from 'ajv-errors-to-data-tree/src/helpers.js'
 
-import * as m from '../../../bazar-common/messages.js'
+import * as m from '../../../fi-common/messages.js'
 
 import {_parseFirstOneOfItemPath} from '../helpers.js'
 
 const ajv = new Ajv({allErrors: true, strictRequired: true})
 
-const otherProps = {
+const rest = {
     _id: {},
-    name: {
-        type: "string"
+    name: {type: "string", minLength: 3, maxLength: 150},
+    price: {type: "number", minimum: 0},
+    is_in_stock: {type: "boolean"},
+    photos: {type: "array", maxItems: 150, minItems: 1, items: {
+        type: "string",
+        minLength: 1,
+        maxLength: 150,
+    }},
+    cover_photo: {
+        type: "string", minLength: 1, maxLength: 150
     },
-    // see Additional validation: type-validating `itemInitial` in `_validate`
-    itemInitial: {}
+    description: {type: "string", minLength: 1, maxLength: 150}
 }
 
 const schema = {
@@ -24,25 +31,19 @@ const schema = {
         {
             type: "object",
             properties: {
-                isInSale: {
-                    type: "boolean",
-                    enum: [true]
-                },
-                ...otherProps,
+                expose: {type: "boolean", enum: [true]},
+                ...rest
             },
-            required: ["isInSale", "name", "itemInitial"],
+            required: ['expose', 'name', 'price', 'is_in_stock', 'photos', 'cover_photo', 'description'],
             additionalProperties: false
         },
         {
             type: "object",
             properties: {
-                isInSale: {
-                    type: "boolean",
-                    enum: [false]
-                },
-                ...otherProps,
+                expose: {type: "boolean", enum: [false]},
+                ...rest,
             },
-            required: ["isInSale"],
+            required: ['expose'],
             additionalProperties: false
         }
     ]
@@ -51,12 +52,12 @@ const _validate = ajv.compile(schema)
 
 function filterErrors(errors) {
     // 1, 1.2 in Filtering out irrelevant errors
-    const isInSaleErr = errors.node.isInSale?.errors.find(e => 'required' === e.data.keyword || 'type' === e.data.keyword)
+    const exposeErr = errors.node.expose?.errors.find(e => 'required' === e.data.keyword || 'type' === e.data.keyword)
 
-    if (isInSaleErr) {
+    if (exposeErr) {
         traverseTree(errors, (e, fieldname) => {
             // 1.1, 1.2, 1.3 in Filtering out irrelevant errors
-            if (_parseFirstOneOfItemPath(isInSaleErr.data.schemaPath) === _parseFirstOneOfItemPath(e.data.schemaPath) || 'required' === e.data.keyword && 'isInSale' !== fieldname || 'enum' === e.data.keyword) return null
+            if (_parseFirstOneOfItemPath(exposeErr.data.schemaPath) === _parseFirstOneOfItemPath(e.data.schemaPath) || 'required' === e.data.keyword && 'expose' !== fieldname || 'enum' === e.data.keyword) return null
         })
 
         return
@@ -83,37 +84,8 @@ function filterErrors(errors) {
     return
 }
 
-function _validateBSON(fields) {
-    // see `_product-validate`, `_validateBSON`: handle non-existing 
-    if (!('_id' in fields) && !('itemInitial' in fields)) return null
-
-    const errors = {errors: [], node: {}}
-
-    if ('_id' in fields) {
-        try {
-            new ObjectId(fields._id)
-        } catch(e) {
-            errors.node._id = {errors: [e], node: null}
-        }
-    }
-
-    if ('itemInitial' in fields) {
-        try {
-            new ObjectId(fields.itemInitial)
-        } catch(e) {
-            errors.node.itemInitial = {errors: [e], node: null}
-        }
-    }
-
-    if (errors.node._id || errors.node.itemInitial) return errors
-
-    return null
-}
-
 function validate(fields) {
-    if (_validate(fields)) {
-        return _validateBSON(fields)
-    }
+    if (_validate(fields)) return null
 
     const errors = toTree(_validate.errors, (e) => {
         // console.log("toTree, cb - e:", e);
@@ -129,31 +101,10 @@ function validate(fields) {
 
     filterErrors(errors)
 
-    // there could be a 'required' error for itemInitial; there couldn't be any error for _id
-    if (errors.node.itemInitial) return errors
-
-    const bsonErrors = _validateBSON(fields)
-    if (bsonErrors) {
-        if (bsonErrors.node._id) {
-            errors.node._id = {
-                errors: [m.ValidationError.create(bsonErrors.node._id.errors[0].message, bsonErrors.node._id.errors[0])],
-                node: null,
-            }
-        }
-
-        if (bsonErrors.node.itemInitial) {
-            errors.node.itemInitial = {
-                errors: [m.ValidationError.create(bsonErrors.node.itemInitial.errors[0].message, bsonErrors.node.itemInitial.errors[0])],
-                node: null,
-            }
-        }
-    }
-
     return errors
 }
 
 export {
     validate,
-    _validateBSON,
     filterErrors, _validate
 }

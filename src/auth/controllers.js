@@ -1,6 +1,6 @@
 import {ObjectId} from 'bson'
 
-import * as m from '../../../bazar-common/messages.js'
+import * as m from '../../../fi-common/messages.js'
 import {ValidationError, ValidationConflict, ValueNotUnique} from '../helpers.js'
 
 import {generateHash, isEqualHash} from './helpers.js'

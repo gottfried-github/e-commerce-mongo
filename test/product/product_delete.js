@@ -1,5 +1,5 @@
 import {assert} from 'chai'
-import * as m from '../../../bazar-common/messages.js'
+import * as m from '../../../fi-common/messages.js'
 
 import {_delete} from '../../src/product/controllers.js'
 
