@@ -1,6 +1,6 @@
 {
   "name": "bazar-mongo",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "mongodb implementation of bazar e-commerce storage",
   "main": "src/index.js",
   "type": "module",
