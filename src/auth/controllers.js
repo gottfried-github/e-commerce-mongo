@@ -53,14 +53,20 @@ async function _getById(id, {getById, validateObjectId}) {
     const idE = validateObjectId(id)
     if (idE) throw m.InvalidCriterion.create(idE.message, idE)
 
-    const {name, _id} = await getById(new ObjectId(id))
+    const doc = await getById(new ObjectId(id))
+
+    if (null === doc) return null
     
+    const {name, _id} = doc
+
     // see User store in bazar-api
     return {name, id: _id}
 }
 
 async function _getByName(name, password, {getByName, isEqualHash}) {
     const doc = await getByName(name)
+
+    if (null === doc) return null
 
     // see Exposing password data
     if (!isEqualHash(doc.salt.buffer, doc.hash.buffer, password)) throw m.InvalidCriterion.create("password is incorrect")
