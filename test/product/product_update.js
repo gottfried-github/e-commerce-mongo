@@ -183,7 +183,7 @@ function testUpdate() {
         })
 
         describe("validate returns truthy", () => {
-            it("throws the returned value", async () => {
+            it("throws the returned value wrapped in ValidationError", async () => {
                 const errors = "errors"
 
                 try {
@@ -197,7 +197,7 @@ function testUpdate() {
                         containsId: () => {return false}
                     })
                 } catch(e) {
-                    return assert.strictEqual(e, errors)
+                    return assert.strictEqual(e.tree, errors)
                 }
 
                 assert.fail()

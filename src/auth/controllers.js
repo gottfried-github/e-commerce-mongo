@@ -26,13 +26,13 @@ async function _create(fields, {create, validate, generateHash}) {
                 throw _e
             }
 
-            throw errors
+            throw m.ValidationError.create("some fields are filled incorrectly", errors)
         }
 
         if (e instanceof ValueNotUnique) {
             const errors = {errors: [], node: {[e.data.field || 'unknown']: {errors: [m.ValidationError.create(e.message, e)], node: null}}}
 
-            throw errors
+            throw m.ResourceExists.create("value already exists", errors)
         }
 
         throw e

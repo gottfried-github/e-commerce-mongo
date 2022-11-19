@@ -20,7 +20,7 @@ async function _create(fields, {create, validate}) {
         if (!errors) throw new ValidationConflict(VALIDATION_CONFLICT_MSG, {builtin: e})
 
         // spec: validation failure
-        throw errors
+        throw m.ValidationError.create("some fields are filled incorrectly", errors)
     }
 
     // spec: success
@@ -59,7 +59,7 @@ async function _update(id, fields, {update, getById, validate, validateObjectId,
         if (!errors) throw new ValidationConflict(VALIDATION_CONFLICT_MSG, {builtin: e})
 
         // spec: validation failure
-        throw errors
+        throw m.ValidationError.create("some fields are filled incorrectly", errors)
     }
 
     // spec: no document with given id

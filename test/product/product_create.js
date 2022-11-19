@@ -68,7 +68,7 @@ function testCreate() {
         })
 
         describe("validate returns truthy", () => {
-            it("throws the returned value", async () => {
+            it("throws the returned value, wrapped in ValidationError", async () => {
                 const errors = "errors"
 
                 try {
@@ -79,7 +79,7 @@ function testCreate() {
                         },
                     })
                 } catch(e) {
-                    return assert.strictEqual(e, errors)
+                    return assert.strictEqual(e.tree, errors)
                 }
 
                 assert.fail()

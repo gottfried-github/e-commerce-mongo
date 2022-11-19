@@ -71,7 +71,7 @@ function testCreate() {
         })
 
         describe('validate returns data', () => {
-            it('throws the data', async () => {
+            it('throws the data, wrapped in ValidationError', async () => {
                 let data = "some errors"
             
                 try {
@@ -81,7 +81,7 @@ function testCreate() {
                         generateHash: () => {}
                     })
                 } catch (e) {
-                    return assert.strictEqual(e, data)
+                    return assert.strictEqual(e.tree, data)
                 }
 
                 assert.fail("didn't throw")
@@ -90,7 +90,7 @@ function testCreate() {
     })
 
     describe("'create' cb throws ValueNotUnique", async () => {
-        it('throws ValidationError', async () => {
+        it('throws ResourceExists with proper tree', async () => {
             const fieldName = 'name'
 
             try {
@@ -101,9 +101,9 @@ function testCreate() {
                 })
             } catch (e) {
                 return assert(
-                    fieldName in e.node &&
-                    e.node[fieldName].errors.length === 1 &&
-                    e.node[fieldName].errors[0].code === m.ValidationError.code
+                    fieldName in e.tree.node &&
+                    e.tree.node[fieldName].errors.length === 1 &&
+                    e.tree.node[fieldName].errors[0].code === m.ValidationError.code
                 )
             }
 
