@@ -43,7 +43,7 @@ const schema = {
         }
     ]
 }
-const _validate = ajv.compile(schema)
+const _validateJSON = ajv.compile(schema)
 
 function filterErrors(errors) {
     // 1, 1.2 in Filtering out irrelevant errors
@@ -113,8 +113,8 @@ function _validateBSON(fields) {
     return null
 }
 
-function validate(fields, {validateBSON}) {
-    if (_validate(fields)) return null
+function _validate(fields, {validateBSON}) {
+    if (_validateJSON(fields)) return null
 
     const errors = toTree(_validate.errors, (e) => {
         // console.log("toTree, cb - e:", e);
@@ -137,6 +137,6 @@ function validate(fields, {validateBSON}) {
 }
 
 export {
-    _validate, filterErrors, _validateBSON, validate,
+    _validateJSON, filterErrors, _validateBSON, _validate,
      
 }

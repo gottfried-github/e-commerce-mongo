@@ -1,5 +1,5 @@
 import {validateObjectId, containsId} from '../helpers.js'
-import {validate} from './validate.js'
+import {_validate, _validateBSON} from './validate.js'
 
 import {
   _storeCreate, _storeUpdate, _storeDelete, _storeGetById,
@@ -24,6 +24,10 @@ function Product(c) {
 
     function storeGetById(id) {
         return _storeGetById(id, {c})
+    }
+
+    function validate(fields) {
+        return _validate(fields, {validateBSON: _validateBSON})
     }
 
     return {
