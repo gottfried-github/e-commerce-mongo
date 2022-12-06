@@ -116,7 +116,7 @@ function _validateBSON(fields) {
 function _validate(fields, {validateBSON}) {
     if (_validateJSON(fields)) return null
 
-    const errors = toTree(_validate.errors, (e) => {
+    const errors = toTree(_validateJSON.errors, (e) => {
         // console.log("toTree, cb - e:", e);
 
         // see Which errors should not occur in the data
@@ -125,7 +125,7 @@ function _validate(fields, {validateBSON}) {
         if ('required' === e.keyword) return m.FieldMissing.create(e.message, e)
         if ('type' === e.keyword) return m.TypeErrorMsg.create(e.message, e)
 
-        return m.ValidationError.create(e.message, e)
+        return m.ValidationError.create(e.message, null, e)
     })
 
     filterErrors(errors)
