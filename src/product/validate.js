@@ -6,7 +6,7 @@ import {traverseTree} from 'ajv-errors-to-data-tree/src/helpers.js'
 
 import * as m from '../../../fi-common/messages.js'
 
-import {_parseFirstOneOfItemPath} from '../helpers.js'
+import {_parseFirstOneOfItemPath, validateObjectId} from '../helpers.js'
 
 const ajv = new Ajv({allErrors: true, strictRequired: true})
 
@@ -15,14 +15,9 @@ const rest = {
     name: {type: "string", minLength: 3, maxLength: 150},
     price: {type: "number", minimum: 0, maximum: 1000000},
     is_in_stock: {type: "boolean"},
-    photos: {type: "array", maxItems: 150, minItems: 1, items: {
-        type: "string",
-        minLength: 1,
-        maxLength: 1000,
-    }},
-    cover_photo: {
-        type: "string", minLength: 1, maxLength: 1000
-    },
+    photos_all: {type: "array", maxItems: 500, minItems: 1, items: {}},
+    photos: {type: "array", maxItems: 150, minItems: 1, items: {}},
+    cover_photo: {},
     description: {type: "string", minLength: 1, maxLength: 15000}
 }
 
@@ -84,7 +79,41 @@ function filterErrors(errors) {
     return
 }
 
-function validate(fields) {
+function _validateBSON(fields) {
+    const errors = {errors: [], node: {}}
+
+    for (const [photo, i] of fields.photos_all.entries()) {
+        const e = validateObjectId(photo)
+        if (!e) continue
+
+        if (!errors.node.photos_all) errors.node.photos_all = {errors: [], node: []}
+        
+        errors.node.photos_all.node.push({
+            errors: [m.ValidationError.create('invalid objectId', e)], index: i, node: null
+        })
+    }
+    
+    for (const [photo, i] of fields.photos.entries()) {
+        const e = validateObjectId(photo)
+        if (!e) continue
+
+        if (!errors.node.photos) errors.node.photos = {errors: [], node: []}
+        
+        errors.node.photos.node.push({
+            errors: [m.ValidationError.create('invalid objectId', e)], index: i, node: null
+        })
+    }
+
+    const e = validateObjectId(fields.cover_photo)
+    if (e) {
+        errors.node.cover_photo = {errors: [m.ValidationError.create('invalid objectId', e)], node: null}
+    }
+
+    if (Object.keys(errors.node).length) return errors
+    return null
+}
+
+function validate(fields, {validateBSON}) {
     if (_validate(fields)) return null
 
     const errors = toTree(_validate.errors, (e) => {
@@ -101,10 +130,13 @@ function validate(fields) {
 
     filterErrors(errors)
 
+    const bsonErrors = validateBSON(fields)
+    if (bsonErrors) mergeErrors(errors, bsonErrors)
+
     return errors
 }
 
 export {
-    validate,
-    filterErrors, _validate
+    _validate, filterErrors, _validateBSON, validate,
+     
 }

@@ -123,3 +123,14 @@ Therefore, I shall validate the `binData` fields in additional validation.The `b
 Should I return password data in the read methods? The current data flow between `bazar-user-mongo` and `bazar-api` is as follows: the `api` gets user data; then it calls `isCorrectPassword` with that data and the string password. The latter requires the password data.
 What I could do instead is call `isCorrectPassword` directly in the `getByName` method and throw `InvalidCriterion` if it isn't.
 That is what `bazar-api` spec says.
+
+# Storing photo paths as documents
+Have a single pool of photos, from which pick photos to use as demonstrations of the product and as a cover photo for it. 
+
+I.e., keep the photos in one place and reference them from other places.
+
+## 1. Separate collection
+There's no way to reference embedded documents stored in one field from another field of the same document.
+
+## 2. Optimizing for visitor
+Have the admin choose the photos and then generate a field containing mere paths.
