@@ -79,34 +79,41 @@ function filterErrors(errors) {
     return
 }
 
-function _validateBSON(fields) {
+function _validateBSON(fields, {validateObjectId}) {
     const errors = {errors: [], node: {}}
 
-    for (const [photo, i] of fields.photos_all.entries()) {
-        const e = validateObjectId(photo)
-        if (!e) continue
-
-        if (!errors.node.photos_all) errors.node.photos_all = {errors: [], node: []}
-        
-        errors.node.photos_all.node.push({
-            errors: [m.ValidationError.create('invalid objectId', e)], index: i, node: null
-        })
+    if (fields.photos_all) {
+        for (const [i, photo] of fields.photos_all.entries()) {
+            const e = validateObjectId(photo)
+            if (!e) continue
+    
+            if (!errors.node.photos_all) errors.node.photos_all = {errors: [], node: []}
+            
+            errors.node.photos_all.node.push({
+                errors: [m.ValidationError.create('invalid objectId', null, e)], index: i, node: null
+            })
+        }
     }
     
-    for (const [photo, i] of fields.photos.entries()) {
-        const e = validateObjectId(photo)
-        if (!e) continue
-
-        if (!errors.node.photos) errors.node.photos = {errors: [], node: []}
-        
-        errors.node.photos.node.push({
-            errors: [m.ValidationError.create('invalid objectId', e)], index: i, node: null
-        })
+    if (fields.photos) {
+        for (const [i, photo] of fields.photos.entries()) {
+            const e = validateObjectId(photo)
+            if (!e) continue
+    
+            if (!errors.node.photos) errors.node.photos = {errors: [], node: []}
+            
+            errors.node.photos.node.push({
+                errors: [m.ValidationError.create('invalid objectId', null, e)], index: i, node: null
+            })
+        }
     }
 
-    const e = validateObjectId(fields.cover_photo)
-    if (e) {
-        errors.node.cover_photo = {errors: [m.ValidationError.create('invalid objectId', e)], node: null}
+    if (fields.cover_photo) {
+        const e = validateObjectId(fields.cover_photo)
+        
+        if (e) {
+            errors.node.cover_photo = {errors: [m.ValidationError.create('invalid objectId', null, e)], node: null}
+        }
     }
 
     if (Object.keys(errors.node).length) return errors
