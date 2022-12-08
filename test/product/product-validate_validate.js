@@ -1,11 +1,13 @@
-import {assert} from 'chai'
 import {ObjectId} from 'mongodb'
 import {BSONTypeError} from 'bson'
+import {assert} from 'chai'
+
+import * as m from '../../../fi-common/messages.js'
 import {isValidBadInputTree} from '../../../fi-common/helpers.js'
 
-import {testJSONErrors} from './product-validate_testJSONErrors.js'
-
 import {_validate} from "../../src/product/validate.js"
+
+import {testJSONErrors} from './product-validate_testJSONErrors.js'
 
 const testsJSON = {
     exposeRequired: [{
@@ -55,6 +57,46 @@ function testValidate() {
         it("returns valid bad input errors", () => {
             const errors = _validate({expose: true, name: 5}, {validateBSON: () => null})
             assert.strictEqual(isValidBadInputTree(errors), true)
+        })
+    })
+
+    describe("passed data", () => {
+        it("calls validateBSON", () => {
+            let isCalled = null
+
+            _validate({name: 5}, {validateBSON: () => {
+                isCalled = true
+                return null
+            }})
+
+            assert.strictEqual(isCalled, true)
+        })
+
+        it("calls validateBSON with the data", () => {
+            const data = {name: 5}
+            let dataPassed = null
+
+            _validate(data, {validateBSON: (_data) => {
+                dataPassed = _data
+                return null
+            }})
+
+            assert.deepEqual(dataPassed, data)
+        })
+    })
+
+    describe("validateBSON returns errors", () => {
+        it("returns a merger of JSON and BSON errors", () => {
+            const res = _validate({name: 5}, {validateBSON: () => {
+              return {errors: [], node: {
+                cover_photo: {errors: [m.ValidationError.create('invalid objectId')], node: null} 
+              }}
+            }})
+
+            assert(
+                res.node.name && res.node.cover_photo,
+                "should contain only an error for name and an error for cover_photo"
+            )
         })
     })
 }
