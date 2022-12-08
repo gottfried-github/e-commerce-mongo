@@ -2,7 +2,7 @@ import Ajv from 'ajv'
 import {ObjectId} from 'mongodb'
 
 import {toTree} from 'ajv-errors-to-data-tree'
-import {traverseTree} from 'ajv-errors-to-data-tree/src/helpers.js'
+import {traverseTree, mergeErrors} from 'ajv-errors-to-data-tree/src/helpers.js'
 
 import * as m from '../../../fi-common/messages.js'
 
