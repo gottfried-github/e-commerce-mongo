@@ -121,7 +121,7 @@ function _validateBSON(fields, {validateObjectId}) {
 }
 
 function _validate(fields, {validateBSON}) {
-    if (_validateJSON(fields)) return null
+    if (_validateJSON(fields)) return validateBSON(fields)
 
     const errors = toTree(_validateJSON.errors, (e) => {
         // console.log("toTree, cb - e:", e);
