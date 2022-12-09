@@ -124,4 +124,4 @@ async function _getById(id, {getById, validateObjectId}) {
     return getById(new ObjectId(id))
 }
 
-export {_create, _update, _delete, _getById}
+export {_create, _update, _updatePhotos, _delete, _getById}
