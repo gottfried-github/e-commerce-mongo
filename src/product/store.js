@@ -34,6 +34,26 @@ async function _storeUpdate(id, fields, {c}) {
     return true
 }
 
+/**
+ * @param {ObjectId} id
+ * @param {Array} photos array of ObjectId's
+*/
+async function _storeUpdatePhotos(id, photos, {c}) {
+    let res = null
+
+    try {
+        res = await c.updateOne({_id: id}, {$push: {photos_all: {$each: photos}}})
+    } catch (e) {
+        if (121 === e.code) e = new ValidationError(VALIDATION_FAIL_MSG, e)
+        throw e
+    }
+
+    if (!res.matchedCount) return null
+    if (!res.modifiedCount) return false
+
+    return true
+}
+
 async function _storeDelete(id, {c}) {
     const res = await c.deleteOne({_id: id})
     if (0 === res.deletedCount) return null

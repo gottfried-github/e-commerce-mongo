@@ -69,6 +69,26 @@ async function _update(id, fields, {update, getById, validate, validateObjectId,
     return true
 }
 
+async function _updatePhotos(id, photos, {update, validate}) {
+    let res = null
+
+    try {
+        res = await update(id, photos)
+    } catch(e) {
+        if (e instanceof ValidationError) {
+            const errors = validate({photos_all: photos})
+
+            if (!errors) throw new ValidationConflict()
+
+            throw m.ValidationError.create('some photos are invalid', errors)
+        }
+
+        throw e
+    }
+
+    return res
+}
+
 async function _delete(id, {storeDelete, validateObjectId}) {
     // see do validation in a specialized method
     const idE = validateObjectId(id)
