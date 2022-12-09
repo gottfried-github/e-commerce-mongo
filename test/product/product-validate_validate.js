@@ -53,14 +53,12 @@ function testValidate() {
         })
     })
 
-    describe("valid data", () => {
+    describe("invalid data", () => {
         it("returns valid bad input errors", () => {
             const errors = _validate({expose: true, name: 5}, {validateBSON: () => null})
             assert.strictEqual(isValidBadInputTree(errors), true)
         })
-    })
 
-    describe("passed data", () => {
         it("calls validateBSON", () => {
             let isCalled = null
 
@@ -71,7 +69,7 @@ function testValidate() {
 
             assert.strictEqual(isCalled, true)
         })
-
+        
         it("calls validateBSON with the data", () => {
             const data = {name: 5}
             let dataPassed = null
@@ -82,6 +80,18 @@ function testValidate() {
             }})
 
             assert.deepEqual(dataPassed, data)
+        })
+    })
+
+    describe("passed JSON-valid data", () => {
+        it("calls validateBSON", () => {
+            let isCalled = null
+
+            _validate({expose: false, name: 'John'}, {validateBSON: () => {
+                isCalled = true
+            }})
+
+            assert.strictEqual(isCalled, true)
         })
     })
 
