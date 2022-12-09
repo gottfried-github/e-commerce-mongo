@@ -65,4 +65,4 @@ async function _storeGetById(id, {c}) {
     return res
 }
 
-export {_storeCreate, _storeUpdate, _storeDelete, _storeGetById}
+export {_storeCreate, _storeUpdate, _storeUpdatePhotos, _storeDelete, _storeGetById}
