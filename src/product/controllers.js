@@ -69,11 +69,16 @@ async function _update(id, fields, {update, getById, validate, validateObjectId,
     return true
 }
 
-async function _updatePhotos(id, photos, {update, validate}) {
+async function _updatePhotos(id, photos, {updatePhotos, validate, validateObjectId}) {
     let res = null
 
+    const idE = validateObjectId(id)
+
+    // spec: invalid id
+    if (idE) throw m.InvalidCriterion.create(idE.message, idE)
+
     try {
-        res = await update(id, photos)
+        res = await updatePhotos(id, photos)
     } catch(e) {
         if (e instanceof ValidationError) {
             const errors = validate({photos_all: photos})
