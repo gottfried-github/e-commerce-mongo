@@ -1,16 +1,14 @@
 import * as m from '../../../fi-common/messages.js'
 import {ValidationConflict, ValidationError} from '../helpers.js'
 
-import {_storeCreateMany} from "./store"
-
 /**
  * @param {Array} fields array of fields objects
 */
-async function _createMany(fields) {
+async function _createMany(fields, {createMany, validate}) {
     let res = null
     
     try {
-        res = await _storeCreateMany(fields)
+        res = await createMany(fields)
     } catch(e) {
         if (e instanceof ValidationError) {
             const errors = validate(fields[e.data.index])
@@ -27,3 +25,5 @@ async function _createMany(fields) {
 
     return res
 }
+
+export {_createMany}
