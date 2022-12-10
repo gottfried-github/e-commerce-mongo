@@ -21,6 +21,8 @@ async function _createMany(fields, {createMany, validate}) {
                 node: errors.node
             }])
         }
+
+        throw e
     }
 
     return res
