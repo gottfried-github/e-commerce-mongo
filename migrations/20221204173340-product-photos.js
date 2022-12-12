@@ -1,4 +1,4 @@
-const schemaPrev = require('./20220409125303-product-schema.js');
+const schemaPrev = require('./20220409125303-product-schema.js').schema;
 const photosItem = {bsonType: 'objectId'}
 
 const photos_all = {
@@ -9,14 +9,14 @@ const photos_all = {
   
 const schema = schemaPrev
 
-schema.oneOf[0].photos_all = photos_all
-schema.oneOf[1].photos_all = photos_all
+schema.oneOf[0].properties.photos_all = photos_all
+schema.oneOf[1].properties.photos_all = photos_all
 
-schema.oneOf[0].photos.items = photosItem
-schema.oneOf[1].photos.items = photosItem
+schema.oneOf[0].properties.photos.items = photosItem
+schema.oneOf[1].properties.photos.items = photosItem
 
-schema.oneOf[0].cover_photo = photosItem
-schema.oneOf[1].cover_photo = photosItem
+schema.oneOf[0].properties.cover_photo = photosItem
+schema.oneOf[1].properties.cover_photo = photosItem
 
 module.exports = {
   async up(db, client) {

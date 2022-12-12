@@ -6,10 +6,10 @@ const schema = {
       bsonType: 'string',
       minLength: 1,
       maxLength: 1000,
-    },
-    required: ['_id', 'path'],
-    additionalProperties: false
-  }
+    }
+  },
+  required: ['_id', 'path'],
+  additionalProperties: false
 }
 
 module.exports = {
@@ -21,4 +21,6 @@ module.exports = {
   async down(db, client) {
     db.dropCollection("photo")
   },
+
+  schema
 };
