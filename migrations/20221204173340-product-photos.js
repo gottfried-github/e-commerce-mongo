@@ -15,8 +15,8 @@ schema.oneOf[1].photos_all = photos_all
 schema.oneOf[0].photos.items = photosItem
 schema.oneOf[1].photos.items = photosItem
 
-schema.oneOf[0].coverPhoto = photosItem
-schema.oneOf[1].coverPhoto = photosItem
+schema.oneOf[0].cover_photo = photosItem
+schema.oneOf[1].cover_photo = photosItem
 
 module.exports = {
   async up(db, client) {
