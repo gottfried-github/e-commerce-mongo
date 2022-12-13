@@ -6,7 +6,7 @@ import {
 } from './store.js'
 
 import {
-    _create, _update, _delete, _getById
+    _create, _update, _updatePhotos, _delete, _getById
 } from './controllers.js'
 
 function Product(c) {
@@ -31,7 +31,7 @@ function Product(c) {
     }
 
     function validate(fields) {
-        return _validate(fields, {validateBSON: _validateBSON})
+        return _validate(fields, {validateBSON: (fields) => _validateBSON(fields, {validateObjectId})})
     }
 
     return {
