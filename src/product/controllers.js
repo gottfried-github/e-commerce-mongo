@@ -78,7 +78,7 @@ async function _updatePhotos(id, photos, {updatePhotos, validate, validateObject
     if (idE) throw m.InvalidCriterion.create(idE.message, idE)
 
     try {
-        res = await updatePhotos(id, photos)
+        res = await updatePhotos(new ObjectId(id), photos)
     } catch(e) {
         if (e instanceof ValidationError) {
             const errors = validate({photos_all: photos})
