@@ -14,7 +14,7 @@ async function _storeCreateMany(fields, {c}) {
         throw e
     }
 
-    return res.insertedIds
+    return Object.keys(res.insertedIds).map(k => res.insertedIds[k])
 }
 
 export {_storeCreateMany}
