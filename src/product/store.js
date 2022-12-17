@@ -1,3 +1,5 @@
+import {ObjectId} from 'bson'
+
 import {ValidationError} from '../helpers.js'
 
 const VALIDATION_FAIL_MSG = "data validation failed"
@@ -21,7 +23,7 @@ async function _storeCreate(fields, {c}) {
 async function _storeUpdate(id, fields, {c}) {
     let res = null
     try {
-        res = await c.updateOne({_id: id}, {$set: fields}, {upsert: false})
+        res = await c.updateOne({_id: new ObjectId(id)}, {$set: fields}, {upsert: false})
     } catch(e) {
         if (121 === e.code) e = new ValidationError(VALIDATION_FAIL_MSG, e)
         throw e
@@ -42,7 +44,7 @@ async function _storeUpdatePhotos(id, photos, {c}) {
     let res = null
 
     try {
-        res = await c.updateOne({_id: id}, {$push: {photos_all: {$each: photos}}})
+        res = await c.updateOne({_id: new ObjectId(id)}, {$push: {photos_all: {$each: photos}}})
     } catch (e) {
         if (121 === e.code) e = new ValidationError(VALIDATION_FAIL_MSG, e)
         throw e
@@ -55,13 +57,13 @@ async function _storeUpdatePhotos(id, photos, {c}) {
 }
 
 async function _storeDelete(id, {c}) {
-    const res = await c.deleteOne({_id: id})
+    const res = await c.deleteOne({_id: new ObjectId(id)})
     if (0 === res.deletedCount) return null
     return true
 }
 
 async function _storeGetById(id, {c}) {
-    const res = await c.findOne({_id: id})
+    const res = await c.findOne({_id: new ObjectId(id)})
     return res
 }
 

@@ -1,4 +1,3 @@
-import {ObjectId} from 'bson'
 import * as m from '../../../fi-common/messages.js'
 
 import {ValidationError, ValidationConflict} from '../helpers.js'
@@ -78,7 +77,7 @@ async function _updatePhotos(id, photos, {updatePhotos, validate, validateObject
     if (idE) throw m.InvalidCriterion.create(idE.message, idE)
 
     try {
-        res = await updatePhotos(new ObjectId(id), photos)
+        res = await updatePhotos(id, photos)
     } catch(e) {
         if (e instanceof ValidationError) {
             const errors = validate({photos_all: photos})
@@ -121,7 +120,7 @@ async function _getById(id, {getById, validateObjectId}) {
     if (idE) throw m.InvalidCriterion.create(idE.message, idE)
 
     // spec: success
-    return getById(new ObjectId(id))
+    return getById(id)
 }
 
 export {_create, _update, _updatePhotos, _delete, _getById}
