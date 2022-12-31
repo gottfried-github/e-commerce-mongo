@@ -123,4 +123,8 @@ async function _getById(id, {getById, validateObjectId}) {
     return getById(id)
 }
 
-export {_create, _update, _updatePhotos, _delete, _getById}
+async function _getMany({getMany}) {
+    return getMany()
+}
+
+export {_create, _update, _updatePhotos, _delete, _getById, _getMany}
