@@ -94,6 +94,11 @@ async function _storeGetById(id, {c}) {
                     path: '$$photo.path'
                 }
             }},
+            name: 1,
+            price: 1,
+            is_in_stock: 1,
+            cover_photo: 1,
+            description: 1
         }}
     ]).toArray()
 
