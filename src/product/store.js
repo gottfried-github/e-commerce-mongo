@@ -63,8 +63,57 @@ async function _storeDelete(id, {c}) {
 }
 
 async function _storeGetById(id, {c}) {
-    const res = await c.findOne({_id: new ObjectId(id)})
-    return res
+    const res = await c.aggregate([
+        {$match: {_id: new ObjectId(id)}},
+        {$lookup: {
+            from: 'photo',
+            localField: 'photos_all',
+            foreignField: '_id',
+            as: 'photos_all'
+        }},
+        {$lookup: {
+            from: 'photo',
+            localField: 'photos',
+            foreignField: '_id',
+            as: 'photos'
+        }},
+        {$project: {
+            'photos_all': {$map: {
+                input: '$photos_all',
+                as: 'photo',
+                in: {
+                    id: '$$photo._id',
+                    path: '$$photo.path'
+                }
+            }},
+            'photos': {$map: {
+                input: '$photos',
+                as: 'photo',
+                in: {
+                    id: '$$photo._id',
+                    path: '$$photo.path'
+                }
+            }},
+        }}
+    ]).toArray()
+
+    return res[0]
 }
 
-export {_storeCreate, _storeUpdate, _storeUpdatePhotos, _storeDelete, _storeGetById}
+async function _storeGetMany({c}) {
+    return c.aggregate([
+        {$match: {}},
+        {$project: {
+            id: '$_id',
+            name: 1,
+            price: 1,
+            is_in_stock: 1,
+            photos: 1,
+            photos_all: 1,
+            cover_photo: 1,
+            description: 1
+        }}
+    ]).toArray()
+}
+
+export {_storeCreate, _storeUpdate, _storeUpdatePhotos, _storeDelete, _storeGetById, _storeGetMany}
