@@ -1,6 +1,6 @@
 import {ObjectId} from 'bson'
 
-import {ValidationError} from '../helpers.js'
+import {ValidationError, validateObjectId} from '../helpers.js'
 
 const VALIDATION_FAIL_MSG = "data validation failed"
 
@@ -17,12 +17,22 @@ async function _storeCreate(fields, {c}) {
     return res.insertedId
 }
 
+function _wrapPhoto(photo) {
+    const e = validateObjectId(photo)
+    if (e) throw new ValidationError('photo objectId is invalid', e)
+
+    return new ObjectId(photo)
+}
+
 /**
     @param {id, in Types} id
 */
 async function _storeUpdate(id, fields, {c}) {
     let res = null
     try {
+        if (fields.photos) fields.photos = fields.photos.map(_wrapPhoto)
+        if (fields.photos_all) fields.photos_all = fields.photos_all.map(_wrapPhoto)
+
         res = await c.updateOne({_id: new ObjectId(id)}, {$set: fields}, {upsert: false})
     } catch(e) {
         if (121 === e.code) e = new ValidationError(VALIDATION_FAIL_MSG, e)
@@ -105,6 +115,10 @@ async function _storeGetById(id, {c}) {
     return res[0]
 }
 
+async function _storeGetByIdRaw(id, {c}) {
+    return c.findOne({_id: new ObjectId(id)})
+}
+
 async function _storeGetMany({c}) {
     return c.aggregate([
         {$match: {}},
@@ -121,4 +135,4 @@ async function _storeGetMany({c}) {
     ]).toArray()
 }
 
-export {_storeCreate, _storeUpdate, _storeUpdatePhotos, _storeDelete, _storeGetById, _storeGetMany}
+export {_storeCreate, _storeUpdate, _storeUpdatePhotos, _storeDelete, _storeGetById, _storeGetByIdRaw, _storeGetMany}

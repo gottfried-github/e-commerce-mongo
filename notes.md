@@ -74,6 +74,9 @@ Including an `_id` in fields would modify the id of the document. If, for exampl
 # `_product-validate`, `_validateBSON`: handle non-existing `itemInitial`
 In `validate`, I don't check whether `itemInitial` is present in the fields before passing them to `_validateBSON`, because which fields should be validated against BSON is not the concern of `validate`: it's the concern of `_validateBSON`. Henceforth, `_validateBSON` should handle it itself. 
 
+# getByIdRaw
+The `_update` controller has to use `getByIdRaw` to additionally validate a document when it fails built-in validation, because the additional validation validates documents against a schema that corresponds to the document as it is to be saved in the database, not as it is to be aggregated on request.
+
 # References
 ## Behavior of the schema, defined in the `20220409125303-product-schema.js`
 See `~/basement/house/test/bazar-product-schema-mongodb` for examples of behavior for different data.
