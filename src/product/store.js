@@ -105,6 +105,10 @@ async function _storeGetById(id, {c}) {
     return res[0]
 }
 
+async function _storeGetByIdRaw(id, {c}) {
+    return c.findOne({_id: new ObjectId(id)})
+}
+
 async function _storeGetMany({c}) {
     return c.aggregate([
         {$match: {}},
@@ -121,4 +125,4 @@ async function _storeGetMany({c}) {
     ]).toArray()
 }
 
-export {_storeCreate, _storeUpdate, _storeUpdatePhotos, _storeDelete, _storeGetById, _storeGetMany}
+export {_storeCreate, _storeUpdate, _storeUpdatePhotos, _storeDelete, _storeGetById, _storeGetByIdRaw, _storeGetMany}
