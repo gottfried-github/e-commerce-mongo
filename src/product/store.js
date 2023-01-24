@@ -33,12 +33,13 @@ async function _storeUpdate(id, {write, remove}, {c}) {
         if (fields.photos) fields.photos = fields.photos.map(_wrapPhoto)
         if (fields.photos_all) fields.photos_all = fields.photos_all.map(_wrapPhoto)
 
-        const query = {
-            $set: write,
-            $unset: {}
-        }
+        const query = {}
+        if (write) query.$set = write
 
-        if (remove) remove.forEach(fieldName => query.$unset[fieldName] = '')
+        if (remove) {
+            query.$unset = {}
+            remove.forEach(fieldName => query.$unset[fieldName] = '')
+        }
 
         res = await c.updateOne({_id: new ObjectId(id)}, query, {upsert: false})
     } catch(e) {

@@ -39,7 +39,7 @@ async function _update(id, {write, remove}, {update, getById, validate, validate
     if (idE) throw m.InvalidCriterion.create(idE.message, idE)
 
     // see do validation in a specialized method
-    const idFieldName = containsId(write)
+    const idFieldName = containsId(write || {})
     
     // see Prohibiting updating `_id`
     if (idFieldName) throw {errors: [], node: {[idFieldName]: {errors: [m.FieldUnknown.create(`changing a document's id isn't allowed`)], node: null}}}
@@ -55,7 +55,7 @@ async function _update(id, {write, remove}, {update, getById, validate, validate
         const doc = await getById(id)
         if (remove?.length) remove.forEach(fieldName => delete doc[fieldName])
 
-        const errors = validate(Object.assign(doc, write))
+        const errors = validate(Object.assign(doc, write || {}))
 
         if (!errors) throw new ValidationConflict(VALIDATION_CONFLICT_MSG, {builtin: e})
 
