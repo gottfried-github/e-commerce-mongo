@@ -30,8 +30,8 @@ function _wrapPhoto(photo) {
 async function _storeUpdate(id, {write, remove}, {c}) {
     let res = null
     try {
-        if (fields.photos) fields.photos = fields.photos.map(_wrapPhoto)
-        if (fields.photos_all) fields.photos_all = fields.photos_all.map(_wrapPhoto)
+        if (write?.photos) write.photos = write.photos.map(_wrapPhoto)
+        if (write?.photos_all) write.photos_all = write.photos_all.map(_wrapPhoto)
 
         const query = {}
         if (write) query.$set = write
