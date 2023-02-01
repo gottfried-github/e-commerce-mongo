@@ -27,13 +27,21 @@ function _wrapPhoto(photo) {
 /**
     @param {id, in Types} id
 */
-async function _storeUpdate(id, fields, {c}) {
+async function _storeUpdate(id, {write, remove}, {c}) {
     let res = null
     try {
-        if (fields.photos) fields.photos = fields.photos.map(_wrapPhoto)
-        if (fields.photos_all) fields.photos_all = fields.photos_all.map(_wrapPhoto)
+        if (write?.photos) write.photos = write.photos.map(_wrapPhoto)
+        if (write?.photos_all) write.photos_all = write.photos_all.map(_wrapPhoto)
 
-        res = await c.updateOne({_id: new ObjectId(id)}, {$set: fields}, {upsert: false})
+        const query = {}
+        if (write) query.$set = write
+
+        if (remove) {
+            query.$unset = {}
+            remove.forEach(fieldName => query.$unset[fieldName] = '')
+        }
+
+        res = await c.updateOne({_id: new ObjectId(id)}, query, {upsert: false})
     } catch(e) {
         if (121 === e.code) e = new ValidationError(VALIDATION_FAIL_MSG, e)
         throw e
