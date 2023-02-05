@@ -34,6 +34,7 @@ For the given case, should I report a `required` error on the `itemInitial`? For
 So, if `expose` is invalid or missing, we should report any errors regarding the other fields, except the `required` errors.
 
 ## Technicalities
+I implement validation using `json-schema` `oneOf` keyword: I apply different schemas for when `expose` is `true` and when it's `false`.
 When data violates one of the schemas in `oneOf`, errors for every schema are generated.
 Let's consider the case of the product schema.
 1. case data: `{}`, `{expose: 5}`. Both these data will have:
