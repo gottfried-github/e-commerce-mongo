@@ -4,6 +4,19 @@ A storage layer for [e-commerce-app](). Implements specification, defined [here]
 # Architecture
 All the logic having to do directly with mongoDB api and query language is contained in the [`store.js` file](store.js) and in helpers such as [validateObjectId]() and [containsId](). [The controllers](controllers.js) solve logistics between the storage layer and validation.
 
+# Tests
+All the controllers are unit tested as well as the validation functions.
+
+Test product controllers: `npm run test:product-controllers`
+
+Test authentication controllers: `npm run test:auth-controllers`
+
+Test product photos controllers: `npm run test:photo`
+
+Test product validation functions: `npm run test:product-validate`
+
+Test authentication validation functions: `npm run test:auth-validate`
+
 # Validation
 ## Reasons for duplicate validation
 Initially, I attempted to make mongoDB built-in validation machine-readable by executing duplicate validation which I wrote manually, whenever built-in validation fails. This is what is reflected in [the present code](validate.js). Now I think that this is a bad idea. Doing duplicate validation, I would have to make sure that data fails the duplicate validation for precisely the same reasons it fails built-in validation. But this is impossible to do reliably, because built-in validation failure output isn't machine-readable (which is the very reason of doing duplicate validation).
