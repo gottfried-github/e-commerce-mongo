@@ -1,96 +1,96 @@
 import {assert} from 'chai'
 
 // const tests = {
-//     isInSaleRequired, isInSaleType,
-//     isInSaleRequiredNameType, isInSaleNameType,
+//     exposeRequired, exposeType,
+//     exposeRequiredNameType, exposeNameType,
 //     nameTypeItemInitialRequired
 // }
 
 function testJSONErrors(tests) {
-    tests.isInSaleRequired.forEach(t => {
+    tests.exposeRequired.forEach(t => {
         describe(t.description || "", () => {
-            it("contains ONLY a 'required' error for isInSale", () => {
+            it("contains ONLY a 'required' error for expose", () => {
                 const errors = t.o(...t.i)
 
                 assert(
-                    // tree.node only includes isInSale;
-                    1 === Object.keys(errors.node).length && 'isInSale' in errors.node
+                    // tree.node only includes expose;
+                    1 === Object.keys(errors.node).length && 'expose' in errors.node
 
-                    // tree.node.isInSale only has one error;
+                    // tree.node.expose only has one error;
                     // the error keyword is 'required'
-                    && 1 === errors.node.isInSale.errors.length && 'required' === errors.node.isInSale.errors[0].data.keyword
+                    && 1 === errors.node.expose.errors.length && 'required' === errors.node.expose.errors[0].data.keyword
                 )
             })
         })
     })
 
-    tests.isInSaleType.forEach(t => {
+    tests.exposeType.forEach(t => {
         describe(t.description || "", () => {
-            it("contains ONLY a 'type' error for isInSale", () => {
+            it("contains ONLY a 'type' error for expose", () => {
                 const errors = t.o(...t.i)
 
                 assert(
-                    // tree.node only includes isInSale;
-                    1 === Object.keys(errors.node).length && 'isInSale' in errors.node
+                    // tree.node only includes expose;
+                    1 === Object.keys(errors.node).length && 'expose' in errors.node
 
-                    // tree.node.isInSale only has one error;
+                    // tree.node.expose only has one error;
                     // the error keyword is 'type'
-                    && 1 === errors.node.isInSale.errors.length && 'type' === errors.node.isInSale.errors[0].data.keyword
+                    && 1 === errors.node.expose.errors.length && 'type' === errors.node.expose.errors[0].data.keyword
                 )
             })
         })
     })
 
-    tests.isInSaleRequiredNameType.forEach(t => {
+    tests.exposeRequiredNameType.forEach(t => {
         describe(t.description || "", () => {
-            it("contains ONLY a 'required' error for isInSale and 'type' error for name", () => {
+            it("contains ONLY a 'required' error for expose and 'type' error for name", () => {
                 const errors = t.o(...t.i)
 
                 const keys = Object.keys(errors.node)
 
                 assert(
                     // tree.node only includes the two fields
-                    2 === keys.length && keys.includes('isInSale') && keys.includes('name')
+                    2 === keys.length && keys.includes('expose') && keys.includes('name')
 
                     // each of the fields have one proper error
-                    && 1 === errors.node.isInSale.errors.length && 'required' === errors.node.isInSale.errors[0].data.keyword
+                    && 1 === errors.node.expose.errors.length && 'required' === errors.node.expose.errors[0].data.keyword
                     && 1 === errors.node.name.errors.length && 'type' === errors.node.name.errors[0].data.keyword
                 )
             })
         })
     })
 
-    tests.isInSaleNameType.forEach(t => {
+    tests.exposeNameType.forEach(t => {
         describe(t.description || "", () => {
-            it("contains ONLY a 'type' error for isInSale and 'type' error for name", () => {
+            it("contains ONLY a 'type' error for expose and 'type' error for name", () => {
                 const errors = t.o(...t.i)
 
                 const keys = Object.keys(errors.node)
 
                 assert(
                     // tree.node only includes the two fields
-                    2 === keys.length && keys.includes('isInSale') && keys.includes('name')
+                    2 === keys.length && keys.includes('expose') && keys.includes('name')
 
                     // each of the fields have one proper error
-                    && 1 === errors.node.isInSale.errors.length && 'type' === errors.node.isInSale.errors[0].data.keyword
+                    && 1 === errors.node.expose.errors.length && 'type' === errors.node.expose.errors[0].data.keyword
                     && 1 === errors.node.name.errors.length && 'type' === errors.node.name.errors[0].data.keyword
                 )
             })
         })
     })
 
-    tests.nameTypeItemInitialRequired.forEach(t => {
+    tests.nameTypePriceRequired.forEach(t => {
         describe(t.description || "", () => {
-            it("contains ONLY a 'type' error for name and a 'required' error for itemInitial", () => {
+            it("contains ONLY a 'type' error for name and a 'required' error for price", () => {
                 const errors = t.o(...t.i)
 
                 const keys = Object.keys(errors.node)
 
                 assert(
-                    2 === keys.length && keys.includes('name') && keys.includes('itemInitial')
+                    2 === keys.length && keys.includes('name') && keys.includes('price')
 
                     && 1 === errors.node.name.errors.length && 'type' === errors.node.name.errors[0].data.keyword
-                    && 1 === errors.node.itemInitial.errors.length && 'required' === errors.node.itemInitial.errors[0].data.keyword
+                    && 1 === errors.node.price.errors.length && 'required' === errors.node.price.errors[0].data.keyword
                 )
             })
         })

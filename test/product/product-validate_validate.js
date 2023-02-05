@@ -1,127 +1,112 @@
-import {assert} from 'chai'
 import {ObjectId} from 'mongodb'
 import {BSONTypeError} from 'bson'
-import {isValidBadInputTree} from '../../../helpers.js'
+import {assert} from 'chai'
 
-import {testBSONErrors} from './product-validate_testBSONErrors.js'
+import * as m from '../../../fi-common/messages.js'
+import {isValidBadInputTree} from '../../../fi-common/helpers.js'
+
+import {_validate} from "../../src/product/validate.js"
+
 import {testJSONErrors} from './product-validate_testJSONErrors.js'
 
-import {validate} from "../../src/product/validate.js"
-
 const testsJSON = {
-    isInSaleRequired: [{
+    exposeRequired: [{
         i: [{}],
-        o: validate,
-        description: "missing isInSale and no fields"
+        o: (fields) => {return _validate(fields, {validateBSON: () => null})},
+        description: "missing expose and no fields"
     }],
-    isInSaleType: [{
-        i: [{isInSale: 5}],
-        o: validate,
-        description: "invalid isInSale and no fields"
+    exposeType: [{
+        i: [{expose: 5}],
+        o: (fields) => {return _validate(fields, {validateBSON: () => null})},
+        description: "invalid expose and no fields"
     }],
-    isInSaleRequiredNameType: [{
+    exposeRequiredNameType: [{
         i: [{name: 5}],
-        o: validate,
-        description: "missing isInSale and invalid name: shouldn't contain 'required' error for itemInitial - see Which errors to report"
+        o: (fields) => {return _validate(fields, {validateBSON: () => null})},
+        description: "missing expose and invalid name: shouldn't contain 'required' error for itemInitial - see Which errors to report"
     }],
-    isInSaleNameType: [{
-        i: [{isInSale: 5, name: 5}],
-        o: validate,
-        description: "invalid isInSale and invalid name: shouldn't contain 'required' error for itemInitial - see Which errors to report"
+    exposeNameType: [{
+        i: [{expose: 5, name: 5}],
+        o: (fields) => {return _validate(fields, {validateBSON: () => null})},
+        description: "invalid expose and invalid name: shouldn't contain 'required' error for itemInitial - see Which errors to report"
     }],
-    nameTypeItemInitialRequired: [{
-        i: [{isInSale: true, name: 5}],
-        o: validate,
-        description: "true isInSale and invalid name: should contain 'required' error for itemInitial - the case is implied in Which errors to report"
+    nameTypePriceRequired: [{
+        i: [{
+            expose: true, name: 5,
+            is_in_stock: false, photos: ['some/url'], cover_photo: 'some/url', description: "some description"
+        }],
+        o: (fields) => {return _validate(fields, {validateBSON: () => null})},
+        description: "true expose and invalid name: should contain 'required' error for itemInitial - the case is implied in Which errors to report"
     }],
 }
 
 const id = "an invalid id"
-
-const testsBSON = {
-    singleCorrectError: [
-        {
-            i: [{isInSale: false, itemInitial: id}],
-            o: validate,
-            description: "JSON-valid but BSON-invalid: itemInitial is an invalid string objectId",
-            erroneousFieldname: 'itemInitial',
-            erroneousValue: id
-        },
-        {
-            i: [{isInSale: false, itemInitial: new ObjectId(), _id: id}],
-            o: validate,
-            description: "JSON-valid but BSON-invalid: _id is an invalid string objectId",
-            erroneousFieldname: '_id',
-            erroneousValue: id
-        }
-    ],
-    // twoCorrectErrors: [{
-    //     i: [{isInSale: false, itemInitial: id, _id: id}],
-    //     o: validate,
-    //     description: "JSON-valid but BSON-invalid: itemInitial is an invalid string objectId",
-    //     erroneousFieldnames: ['itemInitial', '_id'],
-    //     erroneousValues: [id, id]
-    // }],
-    returnsNull: [
-        {
-            i: [{isInSale: false, itemInitial: new ObjectId().toString()}],
-            o: validate,
-            description: "both JSON- and BSON-valid: itemInitial is a valid string objectId"
-        },
-        {
-            i: [{isInSale: false, itemInitial: new ObjectId()}],
-            o: validate,
-            description: "itemInitial is a valid ObjectId objectId"
-        }
-    ]
-}
 
 function testValidate() {
     describe("JSON validate data", () => {
         testJSONErrors(testsJSON)
     })
 
-    describe("BSON validate data", () => {
-        testBSONErrors(testsBSON)
-    })
-
-    describe("mixed validation", () => {
-        describe("both JSON- and BSON-invalid: invalid isInSale, invalid string objectId itemInitial", () => {
-            it("contains ONLY a 'type' error for isInSale and a BSONTypeError for itemInitial", (() => {
-                const id = "an invalid id"
-                const errors = validate({isInSale: 5, itemInitial: id})
-
-                // console.log('errors:', errors.node.isInSale.errors)
-                try {
-                    new ObjectId(id)
-                } catch(e) {
-                    const keys = Object.keys(errors.node)
-
-                    assert(
-                        // tree.node only includes the two fields
-                        2 === keys.length && keys.includes('isInSale') && keys.includes('itemInitial')
-
-                        // each field contains a single error
-                        && 1 === errors.node.isInSale.errors.length && 'type' === errors.node.isInSale.errors[0].data.keyword && 1 === errors.node.itemInitial.errors.length
-
-                        // the itemInitial error is correct
-                        && errors.node.itemInitial.errors[0].data instanceof BSONTypeError && e.message === errors.node.itemInitial.errors[0].message
-                    )
-                }
-            }))
-        })
-    })
-
     describe("data contains fields, not defined in the spec (see Which errors should not occur in the data)", () => {
         it("throws an appropriate error", () => {
-            assert.throws(() => {validate({isInSale: false, irrelevantProperty: true})}, Error, "data contains fields, not defined in the spec")
+            assert.throws(() => {_validate({expose: false, irrelevantProperty: true}, {validateBSON: () => null})}, Error, "data contains fields, not defined in the spec")
         })
     })
 
-    describe("valid data", () => {
+    describe("invalid data", () => {
         it("returns valid bad input errors", () => {
-            const errors = validate({isInSale: true, itemInitial: "an invalid id"})
+            const errors = _validate({expose: true, name: 5}, {validateBSON: () => null})
             assert.strictEqual(isValidBadInputTree(errors), true)
+        })
+
+        it("calls validateBSON", () => {
+            let isCalled = null
+
+            _validate({name: 5}, {validateBSON: () => {
+                isCalled = true
+                return null
+            }})
+
+            assert.strictEqual(isCalled, true)
+        })
+        
+        it("calls validateBSON with the data", () => {
+            const data = {name: 5}
+            let dataPassed = null
+
+            _validate(data, {validateBSON: (_data) => {
+                dataPassed = _data
+                return null
+            }})
+
+            assert.deepEqual(dataPassed, data)
+        })
+    })
+
+    describe("passed JSON-valid data", () => {
+        it("calls validateBSON", () => {
+            let isCalled = null
+
+            _validate({expose: false, name: 'John'}, {validateBSON: () => {
+                isCalled = true
+            }})
+
+            assert.strictEqual(isCalled, true)
+        })
+    })
+
+    describe("validateBSON returns errors", () => {
+        it("returns a merger of JSON and BSON errors", () => {
+            const res = _validate({name: 5}, {validateBSON: () => {
+              return {errors: [], node: {
+                cover_photo: {errors: [m.ValidationError.create('invalid objectId')], node: null} 
+              }}
+            }})
+
+            assert(
+                res.node.name && res.node.cover_photo,
+                "should contain only an error for name and an error for cover_photo"
+            )
         })
     })
 }

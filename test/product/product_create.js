@@ -1,5 +1,5 @@
 import {assert} from 'chai'
-import * as m from '../../../bazar-common/messages.js'
+import * as m from '../../../fi-common/messages.js'
 
 import {_create} from '../../src/product/controllers.js'
 import {ValidationConflict} from '../../src/helpers.js'
@@ -68,7 +68,7 @@ function testCreate() {
         })
 
         describe("validate returns truthy", () => {
-            it("throws the returned value", async () => {
+            it("throws the returned value, wrapped in ValidationError", async () => {
                 const errors = "errors"
 
                 try {
@@ -79,7 +79,7 @@ function testCreate() {
                         },
                     })
                 } catch(e) {
-                    return assert.strictEqual(e, errors)
+                    return assert.strictEqual(e.tree, errors)
                 }
 
                 assert.fail()

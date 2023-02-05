@@ -1,5 +1,5 @@
 import {assert} from 'chai'
-import * as m from '../../../bazar-common/messages.js'
+import * as m from '../../../fi-common/messages.js'
 
 import {ValidationError} from '../../src/helpers.js'
 import {_update} from '../../src/product/controllers.js'
@@ -10,7 +10,7 @@ function testUpdate() {
         it("passes the 'id' argument to validateObjectId", async () => {
             const id = "an id"
             let isEqual = null
-            await _update(id, {}, {update: async () => {return true}, getById: async () => {}, validate: () => {},
+            await _update(id, {write: {}, remove: []}, {update: async () => {return true}, getById: async () => {}, validate: () => {},
                 validateObjectId: (_id) => {isEqual = id === _id}, containsId: () => {}
             })
 
@@ -24,7 +24,7 @@ function testUpdate() {
             const updateCalls = [], getByIdCalls = [], validateCalls = []
             const idE = "a error with id"
             try {
-                await _update("", {}, {
+                await _update("", {write: {}, remove: []}, {
                     update: async () => {updateCalls.push(null)},
                     getById: async () => {getByIdCalls.push(null)},
                     validate: () => {validateCalls.push(null)},
@@ -52,7 +52,7 @@ function testUpdate() {
             const updateCalls = [], getByIdCalls = [], validateCalls = []
             const idFieldName = "_id"
             try {
-                await _update("", {}, {
+                await _update("", {write: {}, remove: []}, {
                     update: async () => {updateCalls.push(null)},
                     getById: async () => {getByIdCalls.push(null)},
                     validate: () => {validateCalls.push(null)},
@@ -79,11 +79,11 @@ function testUpdate() {
 
     describe("validateObjectId and containsId return falsy", () => {
         it("update gets called AND the arguments are passed to it", async () => {
-            const id = "an id", fields = "fields"
+            const id = "an id", _write = "write", _remove = "remove"
             let isEqual = null
 
-            await _update(id, fields, {
-                update: async (_id, _fields) => {isEqual = id === _id && fields === _fields; return true},
+            await _update(id, {write: _write, remove: _remove}, {
+                update: async (_id, {write, remove}) => {isEqual = id === _id && _write === write && _remove === remove; return true},
                 getById: async () => {},
                 validate: () => {},
                 validateObjectId: () => {return false},
@@ -99,10 +99,10 @@ function testUpdate() {
             const ERR_MSG = "an error message"
 
             try {
-                await _update("", {}, {
+                await _update("", {write: {}, remove: []}, {
                     update: async () => {throw new Error(ERR_MSG)},
-                    getById: async () => {getByIdCalls.push(null)},
-                    validate: () => {validateCalls.push(null)},
+                    getById: async () => {/*getByIdCalls.push(null)*/},
+                    validate: () => {/*validateCalls.push(null)*/},
                     validateObjectId: () => {return false},
                     containsId: () => {return false}
                 })
@@ -124,7 +124,7 @@ function testUpdate() {
 
             // once getById is called, validate should be called and then _update should throw
             try {
-                const res = await _update(id, {}, {
+                const res = await _update(id, {write: {}, remove: []}, {
                     update: async () => {throw new ValidationError()},
                     getById: async (_id) => {isEqual = id === _id},
                     validate: () => {return true},
@@ -138,19 +138,44 @@ function testUpdate() {
             assert.fail()
         })
 
-        it("validate is called with the 'fields' argument assigned the object, returned by getById", async () => {
-            const fields = {a: 0, b: 1}, doc = {b: 2}
+        it("validate is called with the mix of 'write' and the doc, returned by 'getById'", async () => {
+            const write = {a: 0, b: 1}, remove = [], doc = {b: 2}
             let _fieldsCorrect = null
 
             // once getById is called, validate should be called and then _update should throw
             try {
-                const res = await _update("", fields, {
+                const res = await _update("", {write, remove}, {
                     update: async () => {throw new ValidationError()},
                     getById: async () => {return doc},
                     validate: (_fields) => {
                         const keys = Object.keys(_fields)
                         _fieldsCorrect = 2 === keys.length && keys.includes('a') && keys.includes('b')
-                        && fields.a === _fields.a && doc.b === _fields.b
+                        && write.a === _fields.a && doc.b === _fields.b
+                    },
+                    validateObjectId: () => {return false},
+                    containsId: () => {return false}
+                })
+            } catch(e) {
+                return assert.strictEqual(_fieldsCorrect, true)
+            }
+
+            assert.fail()
+        })
+        
+        it("validate is called with the mix of 'write' and the doc, returned by 'getById' and modified by 'remove'", async () => {
+            const write = {a: 0, b: 1}, remove = ['c'], doc = {b: 2, c: 3}
+            
+            let _fieldsCorrect = null
+
+            // once getById is called, validate should be called and then _update should throw
+            try {
+                const res = await _update("", {write, remove}, {
+                    update: async () => {throw new ValidationError()},
+                    getById: async () => {return doc},
+                    validate: (_fields) => {
+                        const keys = Object.keys(_fields)
+                        _fieldsCorrect = 2 === keys.length && keys.includes('a') && keys.includes('b') && !keys.includes('c')
+                        && write.a === _fields.a && doc.b === _fields.b
                     },
                     validateObjectId: () => {return false},
                     containsId: () => {return false}
@@ -165,7 +190,7 @@ function testUpdate() {
         describe("validate returns falsy", () => {
             it("throws ValidationConflict", async () => {
                 try {
-                    await _update("", {}, {
+                    await _update("", {write: {}, remove: []}, {
                         update: async () => {throw new ValidationError()},
                         getById: async () => {return true},
                         validate: () => {
@@ -183,11 +208,11 @@ function testUpdate() {
         })
 
         describe("validate returns truthy", () => {
-            it("throws the returned value", async () => {
+            it("throws the returned value wrapped in ValidationError", async () => {
                 const errors = "errors"
 
                 try {
-                    await _update("", {}, {
+                    await _update("", {write: {}, remove: []}, {
                         update: async () => {throw new ValidationError()},
                         getById: async () => {return true},
                         validate: () => {
@@ -197,7 +222,7 @@ function testUpdate() {
                         containsId: () => {return false}
                     })
                 } catch(e) {
-                    return assert.strictEqual(e, errors)
+                    return assert.strictEqual(e.tree, errors)
                 }
 
                 assert.fail()
@@ -206,11 +231,11 @@ function testUpdate() {
     })
 
     describe("update returns null", () => {
-        it("throws InvalidCriterion AND doesn't throw the other dependencies", async () => {
+        it("throws InvalidCriterion AND doesn't call the other dependencies", async () => {
             const getByIdCalls = [], validateCalls = []
 
             try {
-                await _update("", {}, {
+                await _update("", {write: {}, remove: []}, {
                     update: async () => {return null},
                     getById: async () => {getByIdCalls.push(null)},
                     validate: () => {validateCalls.push(null)},
@@ -226,13 +251,15 @@ function testUpdate() {
                     && [getByIdCalls.length, validateCalls.length].filter(l => 0 !== l).length === 0
                 )
             }
+
+            assert.fail("didn't throw")
         })
     })
 
     describe("update returns false", () => {
         it("returns true AND doesn't call the other dependencies", async () => {
             const getByIdCalls = [], validateCalls = []
-            const res = await _update("", {}, {
+            const res = await _update("", {write: {}, remove: []}, {
                 update: async () => {return false},
                 getById: async () => {getByIdCalls.push(null)},
                 validate: () => {validateCalls.push(null)},
@@ -252,7 +279,7 @@ function testUpdate() {
     describe("update returns true", () => {
         it("returns true AND doesn't call the other dependencies", async () => {
             const getByIdCalls = [], validateCalls = []
-            const res = await _update("", {}, {
+            const res = await _update("", {write: {}, remove: []}, {
                 update: async () => {return true},
                 getById: async () => {getByIdCalls.push(null)},
                 validate: () => {validateCalls.push(null)},

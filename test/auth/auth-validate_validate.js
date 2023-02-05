@@ -2,7 +2,7 @@ import {Binary, BSONTypeError} from 'bson'
 import {assert} from 'chai'
 
 import {toTree} from 'ajv-errors-to-data-tree'
-import * as m from '../../../bazar-common/messages.js'
+import * as m from '../../../fi-common/messages.js'
 
 import {validate, _validate, _validateBSON} from '../../src/auth/validate.js'
 

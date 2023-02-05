@@ -2,7 +2,7 @@ import {Binary} from 'bson'
 import Ajv from 'ajv'
 import {toTree} from 'ajv-errors-to-data-tree'
 
-import * as m from '../../../bazar-common/messages.js'
+import * as m from '../../../fi-common/messages.js'
 import {traverseTree} from 'ajv-errors-to-data-tree/src/helpers.js'
 
 const ajv = new Ajv({allErrors: true, strictRequired: true})

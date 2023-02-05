@@ -1,6 +1,6 @@
 import {ObjectId} from 'bson'
 
-import * as m from '../../../bazar-common/messages.js'
+import * as m from '../../../fi-common/messages.js'
 import {ValidationError, ValidationConflict, ValueNotUnique} from '../helpers.js'
 
 import {generateHash, isEqualHash} from './helpers.js'
@@ -26,13 +26,13 @@ async function _create(fields, {create, validate, generateHash}) {
                 throw _e
             }
 
-            throw errors
+            throw m.ValidationError.create("some fields are filled incorrectly", errors)
         }
 
         if (e instanceof ValueNotUnique) {
             const errors = {errors: [], node: {[e.data.field || 'unknown']: {errors: [m.ValidationError.create(e.message, e)], node: null}}}
 
-            throw errors
+            throw m.ResourceExists.create("value already exists", errors)
         }
 
         throw e
@@ -53,14 +53,20 @@ async function _getById(id, {getById, validateObjectId}) {
     const idE = validateObjectId(id)
     if (idE) throw m.InvalidCriterion.create(idE.message, idE)
 
-    const {name, _id} = await getById(new ObjectId(id))
+    const doc = await getById(new ObjectId(id))
+
+    if (null === doc) return null
     
+    const {name, _id} = doc
+
     // see User store in bazar-api
     return {name, id: _id}
 }
 
 async function _getByName(name, password, {getByName, isEqualHash}) {
     const doc = await getByName(name)
+
+    if (null === doc) return null
 
     // see Exposing password data
     if (!isEqualHash(doc.salt.buffer, doc.hash.buffer, password)) throw m.InvalidCriterion.create("password is incorrect")
