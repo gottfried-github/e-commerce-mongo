@@ -1,8 +1,8 @@
 # Description
-A storage layer for [the e-commerce project](). Implements specification, defined [here](e-commerce-api#store-api).
+A storage layer for the [e-commerce project](https://github.com/gottfried-github/e-commerce-app). Implements specification, defined [here](https://github.com/gottfried-github/e-commerce-api#store-api).
 
 # Architecture
-All the logic having to do directly with mongoDB api and query language is contained in the [`store.js` file](store.js) and in helpers such as [validateObjectId]() and [containsId](). [The controllers](controllers.js) solve logistics between the storage layer and validation.
+All the logic having to do directly with mongoDB api and query language is contained in the [`store.js` files](/src/product/store.js) and in helpers such as [validateObjectId]() and [containsId](). [The controllers](/src/product/controllers.js) solve logistics between the storage layer and validation.
 
 # Tests
 All the controllers are unit tested as well as the validation functions.
@@ -19,7 +19,7 @@ Test authentication validation functions: `npm run test:auth-validate`
 
 # Validation
 ## Reasons for duplicate validation
-Initially, I attempted to make mongoDB built-in validation machine-readable by executing duplicate validation which I wrote manually, whenever built-in validation fails. This is what is reflected in [the present code](validate.js). Now I think that this is a bad idea. Doing duplicate validation, I would have to make sure that data fails the duplicate validation for precisely the same reasons it fails built-in validation. But this is impossible to do reliably, because built-in validation failure output isn't machine-readable (which is the very reason of doing duplicate validation).
+Initially, I attempted to make mongoDB built-in validation machine-readable by executing duplicate validation which I wrote manually, whenever built-in validation fails. This is what is reflected in [the present code](/src/product/validate.js). Now I think that this is a bad idea. Doing duplicate validation, I would have to make sure that data fails the duplicate validation for precisely the same reasons it fails built-in validation. But this is impossible to do reliably, because built-in validation failure output isn't machine-readable (which is the very reason of doing duplicate validation).
 
 Instead, I should validate *user input* before passing it to the database and not pass invalid data to the database. Then, if invalid data still somehow gets to the database, developer should be concerned with that (because either, for some reason, the validation didn't work or parts of data with which the validation is not concerned have failed built-in validation and those parts are of developer's concern anyway).
 
