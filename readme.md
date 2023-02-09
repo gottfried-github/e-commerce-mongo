@@ -55,7 +55,7 @@ Let's consider the case of the product schema.
     1. `name`: `required`
     2. `itemInitial`: `required`
 
-We've established, in `'Which errors to report'`, that in a case like this, we don't want to report the `required` errors.
+We've established, in [Which errors to report](#which-errors-to-report), that in a case like this, we don't want to report the `required` errors.
 2. Additionally, with `{expose: true, name: 'a name'}`, `expose` will still have an `enum` error, from the second schema in `oneOf`.
 
 3. `{expose: true, name: 5}`. This will have a `required` error for `itemInitial`.
@@ -71,7 +71,7 @@ So, whenever an error occurs, there will be identical errors for each of the sch
 
 ### Filtering out irrelevant errors
 [`filterErrors`](https://github.com/gottfried-github/e-commerce-mongo/blob/7504297e2251e9521820cb6722d9a3132c805f05/src/product/validate.js#L48) adheres to these principles. 
-1. *In case if `expose` is invalid or missing*: the `required` errors for the other fields are irrelevant - see `'Which errors to report'`; all the other errors will be identical for each of the schemas -- so we can
+1. *In case if `expose` is invalid or missing*: the `required` errors for the other fields are irrelevant - see [Which errors to report](#which-errors-to-report); all the other errors will be identical for each of the schemas -- so we can
     1. ignore the `required` errors for the other fields and
     2. arbitrarily pick any schema and ignore errors from all the other ones
     3. additionally, we can ignore `enum` errors for `isInSale` (which is the only field these errors are possible for), because that keyword is used to make a logical distinction, based on which to choose schema, not to actually specify allowed values
