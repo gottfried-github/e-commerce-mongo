@@ -2,7 +2,7 @@
 A storage layer for the [e-commerce project](https://github.com/gottfried-github/e-commerce-app). Implements specification, defined [here](https://github.com/gottfried-github/e-commerce-api#store-api).
 
 # Architecture
-All the logic having to do directly with mongoDB api and query language is contained in the [`store.js` files](/src/product/store.js) and in helpers such as [validateObjectId]() and [containsId](). [The controllers](/src/product/controllers.js) solve logistics between the storage layer and validation.
+All the logic having to do directly with mongoDB api and query language is contained in the [`store.js`](/src/product/store.js) files and in helpers such as [validateObjectId]() and [containsId](). The [controllers](/src/product/controllers.js) solve logistics between the storage layer and validation.
 
 # Tests
 All the controllers are unit tested as well as the validation functions.
