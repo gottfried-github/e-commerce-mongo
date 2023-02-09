@@ -1,5 +1,5 @@
 # Description
-A storage layer for [e-commerce-app](). Implements specification, defined [here](e-commerce-api#store-api).
+A storage layer for [the e-commerce project](). Implements specification, defined [here](e-commerce-api#store-api).
 
 # Architecture
 All the logic having to do directly with mongoDB api and query language is contained in the [`store.js` file](store.js) and in helpers such as [validateObjectId]() and [containsId](). [The controllers](controllers.js) solve logistics between the storage layer and validation.
@@ -48,6 +48,7 @@ So, if `expose` is invalid or missing, we should report any errors regarding the
 
 ## Technicalities
 I implement validation using `json-schema` `oneOf` keyword: I apply different schemas for when `expose` is `true` and when it's `false`.
+
 When data violates one of the schemas in `oneOf`, errors for every schema are generated.
 Let's consider the case of the product schema.
 1. case data: `{}`, `{expose: 5}`. Both these data will have:
