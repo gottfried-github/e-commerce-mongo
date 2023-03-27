@@ -5,7 +5,7 @@ import {ValidationError} from '../helpers.js'
 /**
     @param {fields, in Types} fields
 */
-async function _create(fields, {create, validate}) {
+async function _create(fields, {create}) {
     let id = null
     try {
         id = await create(fields)
@@ -25,7 +25,7 @@ async function _create(fields, {create, validate}) {
     @param {fields, in Types} write
     @param {Array} remove
 */
-async function _update(id, {write, remove}, {update, getById, validate, validateObjectId, containsId}) {
+async function _update(id, {write, remove}, {update, validateObjectId, containsId}) {
     const idE = validateObjectId(id)
 
     // spec: invalid id
@@ -53,7 +53,7 @@ async function _update(id, {write, remove}, {update, getById, validate, validate
     return true
 }
 
-async function _updatePhotos(id, photos, {updatePhotos, validate, validateObjectId}) {
+async function _updatePhotos(id, photos, {updatePhotos, validateObjectId}) {
     let res = null
 
     const idE = validateObjectId(id)
