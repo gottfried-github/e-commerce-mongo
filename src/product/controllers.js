@@ -1,8 +1,6 @@
 import * as m from '../../../fi-common/messages.js'
 
-import {ValidationError, ValidationConflict} from '../helpers.js'
-
-const VALIDATION_CONFLICT_MSG = "mongodb validation fails while model level validation succeeds"
+import {ValidationError} from '../helpers.js'
 
 /**
     @param {fields, in Types} fields
@@ -14,12 +12,8 @@ async function _create(fields, {create, validate}) {
     } catch(e) {
         if (!(e instanceof ValidationError)) throw e
 
-        const errors = validate(fields)
-
-        if (!errors) throw new ValidationConflict(VALIDATION_CONFLICT_MSG, {builtin: e})
-
         // spec: validation failure
-        throw m.ValidationError.create("some fields are filled incorrectly", errors)
+        throw m.ValidationError.create("mongoDB builtin validation failed", null, e.data)
     }
 
     // spec: success
@@ -32,13 +26,11 @@ async function _create(fields, {create, validate}) {
     @param {Array} remove
 */
 async function _update(id, {write, remove}, {update, getById, validate, validateObjectId, containsId}) {
-    // see do validation in a specialized method
     const idE = validateObjectId(id)
 
     // spec: invalid id
     if (idE) throw m.InvalidCriterion.create(idE.message, idE)
 
-    // see do validation in a specialized method
     const idFieldName = containsId(write || {})
     
     // see Prohibiting updating `_id`
@@ -48,19 +40,10 @@ async function _update(id, {write, remove}, {update, getById, validate, validate
     try {
         res = await update(id, {write, remove})
     } catch (e) {
-        // 121 is validation error: erroneous response example in https://www.mongodb.com/docs/manual/core/schema-validation/#existing-documents
         if (!(e instanceof ValidationError)) throw e
 
-        // do additional validation only if builtin validation fails. See mongodb with bsonschema: is additional data validation necessary?
-        const doc = await getById(id)
-        if (remove?.length) remove.forEach(fieldName => delete doc[fieldName])
-
-        const errors = validate(Object.assign(doc, write || {}))
-
-        if (!errors) throw new ValidationConflict(VALIDATION_CONFLICT_MSG, {builtin: e})
-
         // spec: validation failure
-        throw m.ValidationError.create("some fields are filled incorrectly", errors)
+        throw m.ValidationError.create("mongoDB builtin validation failed", null, e.data)
     }
 
     // spec: no document with given id
@@ -82,11 +65,7 @@ async function _updatePhotos(id, photos, {updatePhotos, validate, validateObject
         res = await updatePhotos(id, photos)
     } catch(e) {
         if (e instanceof ValidationError) {
-            const errors = validate({photos_all: photos})
-
-            if (!errors) throw new ValidationConflict()
-
-            throw m.ValidationError.create('some photos are invalid', errors)
+            throw m.ValidationError.create('mongoDB builtin validation failed', null, e.data)
         }
 
         throw e
@@ -96,7 +75,6 @@ async function _updatePhotos(id, photos, {updatePhotos, validate, validateObject
 }
 
 async function _delete(id, {storeDelete, validateObjectId}) {
-    // see do validation in a specialized method
     const idE = validateObjectId(id)
 
     // spec: invalid id
@@ -115,7 +93,6 @@ async function _delete(id, {storeDelete, validateObjectId}) {
     @param {id, in Types} id
 */
 async function _getById(id, {getById, validateObjectId}) {
-    // see do validation in a specialized method
     const idE = validateObjectId(id)
 
     // spec: invalid id
