@@ -24,4 +24,4 @@ function containsId(data) {
     return '_id' in data ? '_id' : false
 }
 
-export {_parseFirstOneOfItemPath, validateObjectId, containsId, ValidationError, ValidationConflict, ValueNotUnique}
+export {validateObjectId, containsId, ValidationError, ValidationConflict, ValueNotUnique}
