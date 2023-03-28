@@ -10,8 +10,10 @@ function testUpdate() {
         it("passes the 'id' argument to validateObjectId", async () => {
             const id = "an id"
             let isEqual = null
-            await _update(id, {write: {}, remove: []}, {update: async () => {return true}, getById: async () => {}, validate: () => {},
-                validateObjectId: (_id) => {isEqual = id === _id}, containsId: () => {}
+            await _update(id, {write: {}, remove: []}, {
+                update: async () => {return true},
+                validateObjectId: (_id) => {isEqual = id === _id}, 
+                containsId: () => {}
             })
 
             assert.strictEqual(isEqual, true)
@@ -21,13 +23,11 @@ function testUpdate() {
     describe("validateObjectId returns truthy", () => {
         it("throws InvalidCriterion with the returned value as data AND doesn't call any other dependencies", async () => {
             // see '`_product`, testing `_update`: the order of `validateObjectId` and `containsId` doesn't matter' for why I don't check whether containsId has been called
-            const updateCalls = [], getByIdCalls = [], validateCalls = []
+            const updateCalls = []
             const idE = "a error with id"
             try {
                 await _update("", {write: {}, remove: []}, {
                     update: async () => {updateCalls.push(null)},
-                    getById: async () => {getByIdCalls.push(null)},
-                    validate: () => {validateCalls.push(null)},
                     validateObjectId: () => {return idE},
                     containsId: () => {return false}
                 })
@@ -39,7 +39,7 @@ function testUpdate() {
                     && idE === e.data
 
                     // none of the other dependencies has been called
-                    && [updateCalls.length, getByIdCalls.length, validateCalls.length].filter(l => 0 !== l).length === 0
+                    && [updateCalls.length].filter(l => 0 !== l).length === 0
                 )
             }
 
@@ -49,27 +49,25 @@ function testUpdate() {
 
     describe("containsId returns truthy", () => {
         it("throws an ajv-errors-to-data-tree tree with _id set to FieldUnknown with the returned value as data AND doesn't call any other dependencies", async () => {
-            const updateCalls = [], getByIdCalls = [], validateCalls = []
+            const updateCalls = []
             const idFieldName = "_id"
             try {
                 await _update("", {write: {}, remove: []}, {
                     update: async () => {updateCalls.push(null)},
-                    getById: async () => {getByIdCalls.push(null)},
-                    validate: () => {validateCalls.push(null)},
                     validateObjectId: () => {return false},
                     containsId: () => {return idFieldName}
                 })
             } catch(e) {
                 return assert(
                     // there's only _id property in e.node and it has a single error
-                    1 === Object.keys(e.node).length && 1 === e.node._id?.errors.length
+                    1 === Object.keys(e.tree.node).length && 1 === e.tree.node._id?.errors.length
 
                     // the error is FieldUnknown with data being the value returned by containsId
-                    && m.FieldUnknown.code === e.node._id.errors[0].code
+                    && m.FieldUnknown.code === e.tree.node._id.errors[0].code
                     // && idFieldName === e.node._id.errors[0].data
 
                     // none of the other dependencies has been called
-                    && [updateCalls.length, getByIdCalls.length, validateCalls.length].filter(l => 0 !== l).length === 0
+                    && [updateCalls.length].filter(l => 0 !== l).length === 0
                 )
             }
 
@@ -84,8 +82,6 @@ function testUpdate() {
 
             await _update(id, {write: _write, remove: _remove}, {
                 update: async (_id, {write, remove}) => {isEqual = id === _id && _write === write && _remove === remove; return true},
-                getById: async () => {},
-                validate: () => {},
                 validateObjectId: () => {return false},
                 containsId: (data) => {return false}
             })
@@ -101,155 +97,44 @@ function testUpdate() {
             try {
                 await _update("", {write: {}, remove: []}, {
                     update: async () => {throw new Error(ERR_MSG)},
-                    getById: async () => {/*getByIdCalls.push(null)*/},
-                    validate: () => {/*validateCalls.push(null)*/},
                     validateObjectId: () => {return false},
                     containsId: () => {return false}
                 })
             } catch(e) {
-                return assert(
-                    // error is the one, thrown by update
-                    ERR_MSG === e.message
-                )
+                return assert.strictEqual(e.message, ERR_MSG)
             }
 
             assert.fail("_update didn't throw")
         })
     })
 
-    describe("update throws an ValidationError", () => {
-        it("getById is called with the 'id' argument", async () => {
-            const id = "an id"
-            let isEqual = null
-
-            // once getById is called, validate should be called and then _update should throw
+    describe("update throws a ValidationError", () => {
+        it("throws a ValidationError message", async () => {
             try {
-                const res = await _update(id, {write: {}, remove: []}, {
+                const res = await _update("", {write: {}, remove: []}, {
                     update: async () => {throw new ValidationError()},
-                    getById: async (_id) => {isEqual = id === _id},
-                    validate: () => {return true},
                     validateObjectId: () => {return false},
                     containsId: () => {return false}
                 })
             } catch(e) {
-                return assert.strictEqual(isEqual, true)
+                return assert.strictEqual(e.code, m.ValidationError.code)
             }
 
-            assert.fail()
-        })
-
-        it("validate is called with the mix of 'write' and the doc, returned by 'getById'", async () => {
-            const write = {a: 0, b: 1}, remove = [], doc = {b: 2}
-            let _fieldsCorrect = null
-
-            // once getById is called, validate should be called and then _update should throw
-            try {
-                const res = await _update("", {write, remove}, {
-                    update: async () => {throw new ValidationError()},
-                    getById: async () => {return doc},
-                    validate: (_fields) => {
-                        const keys = Object.keys(_fields)
-                        _fieldsCorrect = 2 === keys.length && keys.includes('a') && keys.includes('b')
-                        && write.a === _fields.a && doc.b === _fields.b
-                    },
-                    validateObjectId: () => {return false},
-                    containsId: () => {return false}
-                })
-            } catch(e) {
-                return assert.strictEqual(_fieldsCorrect, true)
-            }
-
-            assert.fail()
-        })
-        
-        it("validate is called with the mix of 'write' and the doc, returned by 'getById' and modified by 'remove'", async () => {
-            const write = {a: 0, b: 1}, remove = ['c'], doc = {b: 2, c: 3}
-            
-            let _fieldsCorrect = null
-
-            // once getById is called, validate should be called and then _update should throw
-            try {
-                const res = await _update("", {write, remove}, {
-                    update: async () => {throw new ValidationError()},
-                    getById: async () => {return doc},
-                    validate: (_fields) => {
-                        const keys = Object.keys(_fields)
-                        _fieldsCorrect = 2 === keys.length && keys.includes('a') && keys.includes('b') && !keys.includes('c')
-                        && write.a === _fields.a && doc.b === _fields.b
-                    },
-                    validateObjectId: () => {return false},
-                    containsId: () => {return false}
-                })
-            } catch(e) {
-                return assert.strictEqual(_fieldsCorrect, true)
-            }
-
-            assert.fail()
-        })
-
-        describe("validate returns falsy", () => {
-            it("throws ValidationConflict", async () => {
-                try {
-                    await _update("", {write: {}, remove: []}, {
-                        update: async () => {throw new ValidationError()},
-                        getById: async () => {return true},
-                        validate: () => {
-                            return false
-                        },
-                        validateObjectId: () => {return false},
-                        containsId: () => {return false}
-                    })
-                } catch(e) {
-                    return assert.instanceOf(e, ValidationConflict)
-                }
-
-                assert.fail()
-            })
-        })
-
-        describe("validate returns truthy", () => {
-            it("throws the returned value wrapped in ValidationError", async () => {
-                const errors = "errors"
-
-                try {
-                    await _update("", {write: {}, remove: []}, {
-                        update: async () => {throw new ValidationError()},
-                        getById: async () => {return true},
-                        validate: () => {
-                            return errors
-                        },
-                        validateObjectId: () => {return false},
-                        containsId: () => {return false}
-                    })
-                } catch(e) {
-                    return assert.strictEqual(e.tree, errors)
-                }
-
-                assert.fail()
-            })
+            assert.fail("didn't throw")
         })
     })
 
     describe("update returns null", () => {
-        it("throws InvalidCriterion AND doesn't call the other dependencies", async () => {
-            const getByIdCalls = [], validateCalls = []
+        it("throws InvalidCriterion", async () => {
 
             try {
                 await _update("", {write: {}, remove: []}, {
                     update: async () => {return null},
-                    getById: async () => {getByIdCalls.push(null)},
-                    validate: () => {validateCalls.push(null)},
                     validateObjectId: () => {return false},
                     containsId: () => {return false}
                 })
             } catch(e) {
-                return assert(
-                    // the error is an InvalidCriterion
-                    m.InvalidCriterion.code === e.code
-
-                    // none of the other dependencies has been called
-                    && [getByIdCalls.length, validateCalls.length].filter(l => 0 !== l).length === 0
-                )
+                return assert(e.code, m.InvalidCriterion.code)
             }
 
             assert.fail("didn't throw")
@@ -257,42 +142,26 @@ function testUpdate() {
     })
 
     describe("update returns false", () => {
-        it("returns true AND doesn't call the other dependencies", async () => {
-            const getByIdCalls = [], validateCalls = []
+        it("returns true", async () => {
             const res = await _update("", {write: {}, remove: []}, {
                 update: async () => {return false},
-                getById: async () => {getByIdCalls.push(null)},
-                validate: () => {validateCalls.push(null)},
                 validateObjectId: () => {return false},
                 containsId: () => {return false}
             })
 
-            return assert(
-                true === res
-
-                // none of the other dependencies has been called
-                && [getByIdCalls.length, validateCalls.length].filter(l => 0 !== l).length === 0
-            )
+            return assert(res, true)
         })
     })
 
     describe("update returns true", () => {
-        it("returns true AND doesn't call the other dependencies", async () => {
-            const getByIdCalls = [], validateCalls = []
+        it("returns true", async () => {
             const res = await _update("", {write: {}, remove: []}, {
                 update: async () => {return true},
-                getById: async () => {getByIdCalls.push(null)},
-                validate: () => {validateCalls.push(null)},
                 validateObjectId: () => {return false},
                 containsId: () => {return false}
             })
 
-            return assert(
-                true === res
-
-                // none of the other dependencies has been called
-                && [getByIdCalls.length, validateCalls.length].filter(l => 0 !== l).length === 0
-            )
+            return assert(res, true)
         })
     })
 }

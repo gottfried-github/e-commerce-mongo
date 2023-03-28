@@ -1,5 +1,4 @@
 import {validateObjectId, containsId} from '../helpers.js'
-import {_validate, _validateBSON} from './validate.js'
 
 import {
   _storeCreate, _storeUpdate, _storeUpdatePhotos, _storeDelete, _storeGetById, _storeGetByIdRaw, _storeGetMany
@@ -38,10 +37,6 @@ function Product(c) {
         return _storeGetMany({c})
     }
 
-    function validate(fields) {
-        return _validate(fields, {validateBSON: (fields) => _validateBSON(fields, {validateObjectId})})
-    }
-
     return {
         getById: async (id) => {
             return _getById(id, {getById: storeGetById, validateObjectId})
@@ -52,15 +47,15 @@ function Product(c) {
         },
 
         create: async (fields) => {
-            return _create(fields, {create: storeCreate, validate})
+            return _create(fields, {create: storeCreate})
         },
 
         update: async (id, fields) => {
-            return _update(id, fields, {update: storeUpdate, getById: storeGetByIdRaw, validate, validateObjectId, containsId})
+            return _update(id, fields, {update: storeUpdate, validateObjectId, containsId})
         },
 
         updatePhotos: (id, photos) => {
-            return _updatePhotos(id, photos, {updatePhotos: storeUpdatePhotos, validate: _validate, validateObjectId})
+            return _updatePhotos(id, photos, {updatePhotos: storeUpdatePhotos, validateObjectId})
         },
 
         delete: async (id) => {
