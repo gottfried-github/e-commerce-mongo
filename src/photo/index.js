@@ -1,6 +1,5 @@
 import {_storeCreateMany} from './store.js'
 import {_createMany} from './controllers.js'
-import {_validate} from './validate.js'
 
 function main(c) {
     function storeCreateMany(fields) {
@@ -9,8 +8,7 @@ function main(c) {
 
     return {
         createMany: (fields) => _createMany(fields, {
-            createMany: storeCreateMany, 
-            validate: _validate
+            createMany: storeCreateMany
         })
     }
 }

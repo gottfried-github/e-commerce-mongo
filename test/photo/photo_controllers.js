@@ -11,9 +11,9 @@ function testCreateMany() {
             const data = [{path: 'some/path'}]
             let _data = null
 
-            await _createMany(data, {createMany: async (v) => {
-                _data = v
-            }, validate: () => null})
+            await _createMany(data, {
+                createMany: async (v) => _data = v
+            })
 
             assert.deepEqual(data, _data)
         })
@@ -24,9 +24,9 @@ function testCreateMany() {
             const e = new Error('some message')
             
             try {
-                await _createMany([{path: 'some/path'}], {createMany: async () => {
-                    throw e
-                }, validate: () => null})
+                await _createMany([{path: 'some/path'}], {
+                    createMany: async () => {throw e}
+                })
             } catch(_e) {
                 return assert.strictEqual(_e.message, e.message)
             }
@@ -36,49 +36,16 @@ function testCreateMany() {
     })
     
     describe("createMany throws ValidationError", () => {
-        it("calls validate with specified data", async () => {
-            const data = [{path: 'some/path'}]
-            let _data = null
-
+        it("throws ValidationError message", async () => {
             try {
-                await _createMany(data, {createMany: async () => {
-                    throw new ValidationError('validation error', {index: 0})
-                }, validate: (v) => {
-                    _data = v
+                await _createMany([{path: 'some/path'}], {
+                    createMany: async () => {throw new ValidationError()}
+                })
+            } catch(_e) {
+                return assert.strictEqual(_e.code, m.ValidationError.code)
+            }
 
-                    return true
-                }})
-            } catch(e) {}
-
-            assert.deepEqual(_data, data[0])
-        })
-
-        describe("validate returns truthy", () => {
-            it("throws ValidationError message", async () => {
-                try {
-                    await _createMany([{path: 'some/path'}], {createMany: async () => {
-                        throw new ValidationError('validation error', {index: 0})
-                    }, validate: (v) => true})
-                } catch(e) {
-                    return assert.strictEqual(e.code, m.ValidationError.code)
-                }
-
-                assert.fail("didn't throw")
-            })
-        })
-        
-        describe("validate returns falsy", () => {
-            it("throws ValidationConflict", async () => {
-                try {
-                    await _createMany([{path: 'some/path'}], {createMany: async () => {
-                        throw new ValidationError('validation error', {index: 0})
-                    }, validate: (v) => null})
-                } catch(e) {
-                    return assert.instanceOf(e, ValidationConflict)
-                }
-
-                assert.fail("didn't throw")
-            })
+            assert.fail("didn't throw")
         })
     })
 
