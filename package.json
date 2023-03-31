@@ -5,9 +5,7 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "test:product-validate": "mocha test/product/product-validate.js",
     "test:product-controllers": "mocha test/product/product.js",
-    "test:auth-validate": "mocha test/auth/auth-validate.js",
     "test:auth-controllers": "mocha test/auth/auth-controllers.js",
     "test:photo": "mocha test/photo/photo.js"
   },
