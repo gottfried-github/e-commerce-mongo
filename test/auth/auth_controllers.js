@@ -40,52 +40,19 @@ function testCreate() {
     })
 
     describe("'create' cb throws ValidationError", () => {
-        it('calls validate', async () => {
-            let isCalled = false
-            
+        it("throws ValidationError message", async () => {
             try {
                 await _create({}, {
-                    create: async () => {throw new ValidationError("some message")},
-                    validate: () => {isCalled = true; return "some errors"},
-                    generateHash: () => {}
+                    generateHash: () => {},
+                    create: async () => {
+                        throw new ValidationError()
+                    }
                 })
-            } catch (e) {}
+            } catch (e) {
+                return assert.strictEqual(e.code, m.ValidationError.code)
+            }
 
-            assert.strictEqual(isCalled, true)
-        })
-
-        describe('validate returns null', () => {
-            it('throws ValidationConflict', async () => {
-                try {
-                    await _create({}, {
-                        create: async () => {throw new ValidationError("some message")},
-                        validate: () => {return null},
-                        generateHash: () => {}
-                    })
-                } catch (e) {
-                    return assert(e instanceof ValidationConflict)
-                }
-
-                assert.fail("didn't throw")
-            })
-        })
-
-        describe('validate returns data', () => {
-            it('throws the data, wrapped in ValidationError', async () => {
-                let data = "some errors"
-            
-                try {
-                    await _create({}, {
-                        create: async () => {throw new ValidationError("some message")},
-                        validate: () => {return data},
-                        generateHash: () => {}
-                    })
-                } catch (e) {
-                    return assert.strictEqual(e.tree, data)
-                }
-
-                assert.fail("didn't throw")
-            })
+            assert.fail("didn't throw")
         })
     })
 
@@ -96,7 +63,6 @@ function testCreate() {
             try {
                 await _create({}, {
                     create: async () => {throw new ValueNotUnique("some message", {field: fieldName})},
-                    validate: () => {},
                     generateHash: () => {}
                 })
             } catch (e) {

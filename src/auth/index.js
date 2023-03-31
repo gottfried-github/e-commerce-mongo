@@ -1,8 +1,6 @@
 import {generateHash, isEqualHash} from './helpers.js'
 import {validateObjectId} from '../helpers.js'
 
-import {validate} from './validate.js'
-
 import {_storeCreate, _storeGetById, _storeGetByName} from './store.js'
 import {_create, _getById, _getByName} from './controllers.js'
 
@@ -21,7 +19,7 @@ function Auth(c) {
 
     return {
         create: (fields) => {
-            return _create(fields, {create: storeCreate, validate, generateHash})
+            return _create(fields, {create: storeCreate, generateHash})
         },
 
         getById: (id) => {
