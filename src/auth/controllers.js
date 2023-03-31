@@ -3,14 +3,11 @@ import {ObjectId} from 'bson'
 import * as m from '../../../fi-common/messages.js'
 import {ValidationError, ValidationConflict, ValueNotUnique} from '../helpers.js'
 
-import {generateHash, isEqualHash} from './helpers.js'
-import {validate} from './validate.js'
-
 /**
  * TODO: see "`create`: validate password before writing" and "`create`: binData validation in additional validation"
  * 
 */
-async function _create(fields, {create, validate, generateHash}) {
+async function _create(fields, {create, generateHash}) {
     const data = {name: fields.name, ...generateHash(fields.password)}
 
     let id = null
@@ -18,15 +15,7 @@ async function _create(fields, {create, validate, generateHash}) {
         id = await create(data)
     } catch(e) {
         if (e instanceof ValidationError) {
-            const errors = validate(data)
-            
-            if (!errors) {
-                const _e = new ValidationConflict("credentials pass additional validation but builtin validation fails")
-                _e.data = e
-                throw _e
-            }
-
-            throw m.ValidationError.create("some fields are filled incorrectly", errors)
+            throw m.ValidationError.create("mongoDB builtin validation failed", null, e.data)
         }
 
         if (e instanceof ValueNotUnique) {

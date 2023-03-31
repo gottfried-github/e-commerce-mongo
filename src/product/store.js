@@ -10,7 +10,8 @@ async function _storeCreate(fields, {c}) {
     try {
         res = await c.insertOne(fields)
     } catch(e) {
-        if (121 === e.code) e = new ValidationError(VALIDATION_FAIL_MSG, e)
+        // 121 is validation error: erroneous response example in https://www.mongodb.com/docs/manual/core/schema-validation/#existing-documents
+        if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
         throw e
     }
 
@@ -43,7 +44,7 @@ async function _storeUpdate(id, {write, remove}, {c}) {
 
         res = await c.updateOne({_id: new ObjectId(id)}, query, {upsert: false})
     } catch(e) {
-        if (121 === e.code) e = new ValidationError(VALIDATION_FAIL_MSG, e)
+        if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
         throw e
     }
 

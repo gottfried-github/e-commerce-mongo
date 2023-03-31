@@ -11,7 +11,6 @@ function testUpdatePhotos() {
 
             await _updatePhotos('an id', ['an id'], {
                 updatePhotos: () => true, 
-                validate: () => null, 
                 validateObjectId: () => {
                     isCalled = true
                     
@@ -28,7 +27,6 @@ function testUpdatePhotos() {
 
             await _updatePhotos(id, ['an id'], {
                 updatePhotos: () => true, 
-                validate: () => null, 
                 validateObjectId: (_id) => {
                     idPassed = _id
                     
@@ -44,7 +42,6 @@ function testUpdatePhotos() {
                 try {
                     await _updatePhotos('an id', ['an id'], {
                         updatePhotos: () => true,
-                        validate: () => null,
                         validateObjectId: () => true
                     })
                 } catch(e) {
@@ -60,7 +57,6 @@ function testUpdatePhotos() {
                 try {
                     await _updatePhotos('an id', ['an id'], {
                         updatePhotos: () => true,
-                        validate: () => null,
                         validateObjectId: () => err
                     })
                 } catch(e) {
@@ -79,7 +75,6 @@ function testUpdatePhotos() {
             try {
                 await _updatePhotos('an id', ['an id'], {
                     updatePhotos: () => {throw err},
-                    validate: () => null,
                     validateObjectId: () => null
                 })
             } catch(e) {
@@ -91,63 +86,17 @@ function testUpdatePhotos() {
     })
 
     describe("updatePhotos throws ValidationError", () => {
-        it("calls validate", async () => {
-            let isCalled = null
-
-            _updatePhotos('an id', ['an id'], {
-                updatePhotos: () => {throw new ValidationError()},
-                validate: () => {isCalled = true; return true},
-                validateObjectId: () => null
-            })
-
-            assert.isTrue(isCalled)
-        })
-        
-        it("calls validate with passed 'photos'", async () => {
-            const photos = ['an id']
-            let _photos = null
-
+        it("throws a ValidationError message", async () => {
             try {
-                await _updatePhotos('an id', photos, {
-                    updatePhotos: async () => {throw new ValidationError()},
-                    validate: (v) => {_photos = v; return true},
+                await _updatePhotos('an id', ['an id'], {
+                    updatePhotos: () => {throw new ValidationError()},
                     validateObjectId: () => null
                 })
-            } catch(e) {}
+            } catch(e) {
+                return assert.strictEqual(e.code, m.ValidationError.code)
+            }
 
-            assert.deepEqual(_photos.photos_all, photos)
-        })
-
-        describe("validate returns truthy", () => {
-            it("throws ValidationError message", async () => {
-                try {
-                    await _updatePhotos('an id', ['an id'], {
-                        updatePhotos: async () => {throw new ValidationError()},
-                        validate: () => true,
-                        validateObjectId: () => null
-                    })
-                } catch(e) {
-                    return assert.strictEqual(e.code, m.ValidationError.code)
-                }
-    
-                assert.fail("doesn't throw")
-            })  
-        })
-
-        describe("validate returns falsy", () => {
-            it("throws ValidationConflict", async () => {
-                try {
-                    await _updatePhotos('an id', ['an id'], {
-                        updatePhotos: async () => {throw new ValidationError()},
-                        validate: () => null,
-                        validateObjectId: () => null
-                    })
-                } catch(e) {
-                    return assert.instanceOf(e, ValidationConflict)
-                }
-    
-                assert.fail("doesn't throw")
-            })
+            assert.fail("doesn't throw")
         })
     })
 
