@@ -1,13 +1,11 @@
 {
   "name": "bazar-mongo",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "mongodb implementation of bazar e-commerce storage",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "test:product-validate": "mocha test/product/product-validate.js",
     "test:product-controllers": "mocha test/product/product.js",
-    "test:auth-validate": "mocha test/auth/auth-validate.js",
     "test:auth-controllers": "mocha test/auth/auth-controllers.js",
     "test:photo": "mocha test/photo/photo.js"
   },

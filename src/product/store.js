@@ -86,14 +86,41 @@ async function _storeGetById(id, {c}) {
         {$match: {_id: new ObjectId(id)}},
         {$lookup: {
             from: 'photo',
-            localField: 'photos_all',
-            foreignField: '_id',
+            let: {'photo_id': '$photos_all'},
+            // https://stackoverflow.com/a/55034166/11053968
+            pipeline: [
+                // match the documents with the ids in the photos_all array
+                {$match: {
+                    $expr: {$in: ['$_id', '$$photo_id']}
+                }},
+                // add a field to each matching document with index of the document in the photos_all array
+                {$addFields: {
+                    sort: {
+                        $indexOfArray: ['$$photo_id', '$_id']
+                    }
+                }},
+                // sort the matching documents by the added index
+                {$sort: {'sort': 1}},
+                // remove the field with the index
+                {$addFields: {'sort': '$$REMOVE'}}
+            ],
             as: 'photos_all'
         }},
         {$lookup: {
             from: 'photo',
-            localField: 'photos',
-            foreignField: '_id',
+            let: {'photo_id': '$photos'},
+            pipeline: [
+                {$match: {
+                    $expr: {$in: ['$_id', '$$photo_id']}
+                }},
+                {$addFields: {
+                    sort: {
+                        $indexOfArray: ['$$photo_id', '$_id']
+                    }
+                }},
+                {$sort: {'sort': 1}},
+                {$addFields: {'sort': '$$REMOVE'}}
+            ],
             as: 'photos'
         }},
         {$project: {
