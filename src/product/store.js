@@ -33,6 +33,7 @@ async function _storeUpdate(id, {write, remove}, {c}) {
     try {
         if (write?.photos) write.photos = write.photos.map(_wrapPhoto)
         if (write?.photos_all) write.photos_all = write.photos_all.map(_wrapPhoto)
+        if (write?.cover_photo) write.cover_photo = _wrapPhoto(write.cover_photo)
 
         const query = {}
         if (write) query.$set = write
@@ -123,6 +124,12 @@ async function _storeGetById(id, {c}) {
             ],
             as: 'photos'
         }},
+        {$lookup: {
+            from: 'photo',
+            localField: 'cover_photo',
+            foreignField: '_id',
+            as: 'cover_photo_lookup'
+        }},
         {$project: {
             'photos_all': {$map: {
                 input: '$photos_all',
@@ -143,7 +150,16 @@ async function _storeGetById(id, {c}) {
             name: 1,
             price: 1,
             is_in_stock: 1,
-            cover_photo: 1,
+            cover_photo: {
+                id: {$getField: {
+                    field: {$literal: '_id'},
+                    input: {$arrayElemAt: ['$cover_photo_lookup', 0]}
+                }},
+                path: {$getField: {
+                    field: {$literal: 'path'},
+                    input: {$arrayElemAt: ['$cover_photo_lookup', 0]}
+                }},
+            },
             description: 1
         }}
     ]).toArray()
