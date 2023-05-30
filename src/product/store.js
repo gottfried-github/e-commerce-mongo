@@ -189,7 +189,8 @@ async function _storeGetById(id, {c}) {
                     input: {$arrayElemAt: ['$cover_photo_lookup', 0]}
                 }},
             },
-            description: 1
+            description: 1,
+            time: 1
         }}
     ]).toArray()
 
