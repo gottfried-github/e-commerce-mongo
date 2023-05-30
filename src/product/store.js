@@ -7,6 +7,8 @@ const VALIDATION_FAIL_MSG = "data validation failed"
 async function _storeCreate(fields, {c}) {
     let res = null
 
+    if (fields.time) fields.time = new Date(fields.time)
+    
     try {
         res = await c.insertOne(fields)
     } catch(e) {
