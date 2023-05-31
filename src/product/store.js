@@ -36,6 +36,7 @@ async function _storeUpdate(id, {write, remove}, {c}) {
         if (write?.photos) write.photos = write.photos.map(_wrapPhoto)
         if (write?.photos_all) write.photos_all = write.photos_all.map(_wrapPhoto)
         if (write?.cover_photo) write.cover_photo = _wrapPhoto(write.cover_photo)
+        if (write?.time) write.time = new Date(write.time)
 
         const query = {}
         if (write) query.$set = write
