@@ -7,6 +7,8 @@ const VALIDATION_FAIL_MSG = "data validation failed"
 async function _storeCreate(fields, {c}) {
     let res = null
 
+    if (fields.time) fields.time = new Date(fields.time)
+    
     try {
         res = await c.insertOne(fields)
     } catch(e) {
@@ -34,6 +36,7 @@ async function _storeUpdate(id, {write, remove}, {c}) {
         if (write?.photos) write.photos = write.photos.map(_wrapPhoto)
         if (write?.photos_all) write.photos_all = write.photos_all.map(_wrapPhoto)
         if (write?.cover_photo) write.cover_photo = _wrapPhoto(write.cover_photo)
+        if (write?.time) write.time = new Date(write.time)
 
         const query = {}
         if (write) query.$set = write
@@ -87,12 +90,19 @@ async function _storeGetById(id, {c}) {
         {$match: {_id: new ObjectId(id)}},
         {$lookup: {
             from: 'photo',
-            let: {'photo_id': '$photos_all'},
-            // https://stackoverflow.com/a/55034166/11053968
+            let: {
+                'photo_id': '$photos_all'
+            },
             pipeline: [
-                // match the documents with the ids in the photos_all array
                 {$match: {
-                    $expr: {$in: ['$_id', '$$photo_id']}
+                    $expr: {
+                        // only search docs if the local field exists
+                        $cond: {
+                            if: { $eq: [{ $type: "$$photo_id" }, "missing"] },
+                            then: {$literal: null},
+                            else: {$in: ['$_id', '$$photo_id']}
+                        }
+                    }
                 }},
                 // add a field to each matching document with index of the document in the photos_all array
                 {$addFields: {
@@ -109,10 +119,18 @@ async function _storeGetById(id, {c}) {
         }},
         {$lookup: {
             from: 'photo',
-            let: {'photo_id': '$photos'},
+            let: {
+                'photo_id': '$photos'
+            },
             pipeline: [
                 {$match: {
-                    $expr: {$in: ['$_id', '$$photo_id']}
+                    $expr: {
+                        $cond: {
+                            if: { $eq: [{ $type: "$$photo_id" }, "missing"] },
+                            then: {$literal: null},
+                            else: {$in: ['$_id', '$$photo_id']}
+                        }
+                    }
                 }},
                 {$addFields: {
                     sort: {
@@ -126,8 +144,20 @@ async function _storeGetById(id, {c}) {
         }},
         {$lookup: {
             from: 'photo',
-            localField: 'cover_photo',
-            foreignField: '_id',
+            let: {
+                'cover_photo_id': '$cover_photo'
+            },
+            pipeline: [
+                {$match: {
+                    $expr: {
+                        $cond: {
+                            if: { $eq: [{ $type: "$$cover_photo_id" }, "missing"] },
+                            then: {$literal: null},
+                            else: {$eq: ['$_id', '$$cover_photo_id']}
+                        }
+                    }
+                }}
+            ],
             as: 'cover_photo_lookup'
         }},
         {$project: {
@@ -160,7 +190,8 @@ async function _storeGetById(id, {c}) {
                     input: {$arrayElemAt: ['$cover_photo_lookup', 0]}
                 }},
             },
-            description: 1
+            description: 1,
+            time: 1
         }}
     ]).toArray()
 
