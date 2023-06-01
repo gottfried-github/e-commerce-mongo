@@ -12,3 +12,18 @@ Test product controllers: `npm run test:product-controllers`
 Test authentication controllers: `npm run test:auth-controllers`
 
 Test product photos controllers: `npm run test:photo`
+
+# Specification
+## `_storeGetMany`
+### `expose` and `inStock`
+If `Boolean`, matches the corresponding value in the documents. Else, matches all values.
+
+### `sortOrder`
+```json
+{
+    name: String,
+    dir: Number
+}
+```
+
+If falsy, doesn't apply the `$sort` stage. Otherwise, applies the stage according to the specified order and directions.

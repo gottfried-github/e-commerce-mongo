@@ -202,20 +202,137 @@ async function _storeGetByIdRaw(id, {c}) {
     return c.findOne({_id: new ObjectId(id)})
 }
 
-async function _storeGetMany({c}) {
-    return c.aggregate([
-        {$match: {}},
+/**
+ * @param {Boolean} expose what to match in expose field
+ * @param {Boolean} inStock what to match in is_in_stock field
+ * @param {Array} sortOrder sort order and sort direction for each field
+*/
+async function _storeGetMany(expose, inStock, sortOrder, {c}) {
+    const pipeline = []
+    
+    const match = {}
+    if ('boolean' === typeof(expose)) match.expose = expose
+    if ('boolean' === typeof(inStock)) match.is_in_stock = inStock
+    pipeline.push({$match: match})
+
+    if (sortOrder) {
+        const sort = {}
+        for (const i of sortOrder) sort[i.name] = i.dir
+        pipeline.push({$sort: sort})
+    }
+
+    pipeline.push(
+        {$lookup: {
+            from: 'photo',
+            let: {
+                'photo_id': '$photos_all'
+            },
+            pipeline: [
+                {$match: {
+                    $expr: {
+                        // only search docs if the local field exists
+                        $cond: {
+                            if: { $eq: [{ $type: "$$photo_id" }, "missing"] },
+                            then: {$literal: null},
+                            else: {$in: ['$_id', '$$photo_id']}
+                        }
+                    }
+                }},
+                // add a field to each matching document with index of the document in the photos_all array
+                {$addFields: {
+                    sort: {
+                        $indexOfArray: ['$$photo_id', '$_id']
+                    }
+                }},
+                // sort the matching documents by the added index
+                {$sort: {'sort': 1}},
+                // remove the field with the index
+                {$addFields: {'sort': '$$REMOVE'}}
+            ],
+            as: 'photos_all'
+        }},
+        {$lookup: {
+            from: 'photo',
+            let: {
+                'photo_id': '$photos'
+            },
+            pipeline: [
+                {$match: {
+                    $expr: {
+                        $cond: {
+                            if: { $eq: [{ $type: "$$photo_id" }, "missing"] },
+                            then: {$literal: null},
+                            else: {$in: ['$_id', '$$photo_id']}
+                        }
+                    }
+                }},
+                {$addFields: {
+                    sort: {
+                        $indexOfArray: ['$$photo_id', '$_id']
+                    }
+                }},
+                {$sort: {'sort': 1}},
+                {$addFields: {'sort': '$$REMOVE'}}
+            ],
+            as: 'photos'
+        }},
+        {$lookup: {
+            from: 'photo',
+            let: {
+                'cover_photo_id': '$cover_photo'
+            },
+            pipeline: [
+                {$match: {
+                    $expr: {
+                        $cond: {
+                            if: { $eq: [{ $type: "$$cover_photo_id" }, "missing"] },
+                            then: {$literal: null},
+                            else: {$eq: ['$_id', '$$cover_photo_id']}
+                        }
+                    }
+                }}
+            ],
+            as: 'cover_photo_lookup'
+        }},
         {$project: {
             id: '$_id',
+            'photos_all': {$map: {
+                input: '$photos_all',
+                as: 'photo',
+                in: {
+                    id: '$$photo._id',
+                    path: '$$photo.path'
+                }
+            }},
+            'photos': {$map: {
+                input: '$photos',
+                as: 'photo',
+                in: {
+                    id: '$$photo._id',
+                    path: '$$photo.path'
+                }
+            }},
             name: 1,
             price: 1,
             is_in_stock: 1,
-            photos: 1,
-            photos_all: 1,
-            cover_photo: 1,
-            description: 1
+            cover_photo: {
+                id: {$getField: {
+                    field: {$literal: '_id'},
+                    input: {$arrayElemAt: ['$cover_photo_lookup', 0]}
+                }},
+                path: {$getField: {
+                    field: {$literal: 'path'},
+                    input: {$arrayElemAt: ['$cover_photo_lookup', 0]}
+                }},
+            },
+            description: 1,
+            time: 1
         }}
-    ]).toArray()
+    )
+    
+    const res = await c.aggregate(pipeline).toArray()
+
+    return res
 }
 
 export {_storeCreate, _storeUpdate, _storeUpdatePhotos, _storeDelete, _storeGetById, _storeGetByIdRaw, _storeGetMany}

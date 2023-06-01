@@ -102,8 +102,8 @@ async function _getById(id, {getById, validateObjectId}) {
     return getById(id)
 }
 
-async function _getMany({getMany}) {
-    return getMany()
+async function _getMany(expose, inStock, sortOrder, {getMany}) {
+    return getMany(expose, inStock, sortOrder)
 }
 
 export {_create, _update, _updatePhotos, _delete, _getById, _getMany}
