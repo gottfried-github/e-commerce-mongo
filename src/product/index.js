@@ -33,8 +33,8 @@ function Product(c) {
         return _storeGetByIdRaw(id, {c})
     }
 
-    function storeGetMany() {
-        return _storeGetMany({c})
+    function storeGetMany(expose, inStock, sortOrder) {
+        return _storeGetMany(expose, inStock, sortOrder, {c})
     }
 
     return {
@@ -42,8 +42,8 @@ function Product(c) {
             return _getById(id, {getById: storeGetById, validateObjectId})
         },
 
-        getMany: async () => {
-            return _getMany({getMany: storeGetMany})
+        getMany: async (expose, inStock, sortOrder) => {
+            return _getMany(expose, inStock, sortOrder, {getMany: storeGetMany})
         },
 
         create: async (fields) => {
