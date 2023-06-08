@@ -180,6 +180,7 @@ async function _storeGetById(id, {c}) {
             name: 1,
             price: 1,
             is_in_stock: 1,
+            expose: 1,
             cover_photo: {
                 id: {$getField: {
                     field: {$literal: '_id'},
