@@ -350,6 +350,7 @@ async function _storeGetMany(expose, inStock, sortOrder, {c}) {
                 },
                 else: null
             }},
+            expose: 1,
             description: 1,
             time: 1
         }}
