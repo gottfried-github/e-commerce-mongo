@@ -309,35 +309,47 @@ async function _storeGetMany(expose, inStock, sortOrder, {c}) {
         }},
         {$project: {
             id: '$_id',
-            'photos_all': {$map: {
-                input: '$photos_all',
-                as: 'photo',
-                in: {
-                    id: '$$photo._id',
-                    path: '$$photo.path'
-                }
+            'photos_all': {$cond: {
+                if: {$gt: [{$size: '$photos_all'}, 0]},
+                then: {$map: {
+                    input: '$photos_all',
+                    as: 'photo',
+                    in: {
+                        id: '$$photo._id',
+                        path: '$$photo.path'
+                    }
+                }},
+                else: null
             }},
-            'photos': {$map: {
-                input: '$photos',
-                as: 'photo',
-                in: {
-                    id: '$$photo._id',
-                    path: '$$photo.path'
-                }
+            'photos': {$cond: {
+                if: {$gt: [{$size: '$photos'}, 0]},
+                then: {$map: {
+                    input: '$photos',
+                    as: 'photo',
+                    in: {
+                        id: '$$photo._id',
+                        path: '$$photo.path'
+                    }
+                }},
+                else: null
             }},
             name: 1,
             price: 1,
             is_in_stock: 1,
-            cover_photo: {
-                id: {$getField: {
-                    field: {$literal: '_id'},
-                    input: {$arrayElemAt: ['$cover_photo_lookup', 0]}
-                }},
-                path: {$getField: {
-                    field: {$literal: 'path'},
-                    input: {$arrayElemAt: ['$cover_photo_lookup', 0]}
-                }},
-            },
+            cover_photo: {$cond: {
+                if: {$gt: [{$size: '$cover_photo_lookup'}, 0]},
+                then: {
+                    id: {$getField: {
+                        field: {$literal: '_id'},
+                        input: {$arrayElemAt: ['$cover_photo_lookup', 0]}
+                    }},
+                    path: {$getField: {
+                        field: {$literal: 'path'},
+                        input: {$arrayElemAt: ['$cover_photo_lookup', 0]}
+                    }},
+                },
+                else: null
+            }},
             description: 1,
             time: 1
         }}
