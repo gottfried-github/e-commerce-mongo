@@ -7,28 +7,28 @@ import {ValidationError, ValidationConflict, ValueNotUnique} from '../helpers.js
  * TODO: see "`create`: validate password before writing" and "`create`: binData validation in additional validation"
  * 
 */
-async function _create(fields, {create, generateHash}) {
-    const data = {name: fields.name, ...generateHash(fields.password)}
+// async function _create(fields, {create, generateHash}) {
+//     const data = {name: fields.name, ...generateHash(fields.password)}
 
-    let id = null
-    try {
-        id = await create(data)
-    } catch(e) {
-        if (e instanceof ValidationError) {
-            throw m.ValidationError.create("mongoDB builtin validation failed", null, e.data)
-        }
+//     let id = null
+//     try {
+//         id = await create(data)
+//     } catch(e) {
+//         if (e instanceof ValidationError) {
+//             throw m.ValidationError.create("mongoDB builtin validation failed", null, e.data)
+//         }
 
-        if (e instanceof ValueNotUnique) {
-            const errors = {errors: [], node: {[e.data.field || 'unknown']: {errors: [m.ValidationError.create(e.message, e)], node: null}}}
+//         if (e instanceof ValueNotUnique) {
+//             const errors = {errors: [], node: {[e.data.field || 'unknown']: {errors: [m.ValidationError.create(e.message, e)], node: null}}}
 
-            throw m.ResourceExists.create("value already exists", errors)
-        }
+//             throw m.ResourceExists.create("value already exists", errors)
+//         }
 
-        throw e
-    }
+//         throw e
+//     }
 
-    return id
-}
+//     return id
+// }
 
 // async function _update() {
 
