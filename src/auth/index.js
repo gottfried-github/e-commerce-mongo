@@ -1,13 +1,13 @@
-import {generateHash, isEqualHash} from './helpers.js'
+import {isEqualHash} from './helpers.js'
 import {validateObjectId} from '../helpers.js'
 
-import {_storeCreate, _storeGetById, _storeGetByName} from './store.js'
-import {_create, _getById, _getByName} from './controllers.js'
+import {_storeGetById, _storeGetByName} from './store.js'
+import {_getById, _getByName} from './controllers.js'
 
 function Auth(c) {
-    function storeCreate(fields) {
-        return _storeCreate(fields, {c})
-    }
+    // function storeCreate(fields) {
+    //     return _storeCreate(fields, {c})
+    // }
 
     function storeGetById(id) {
         return _storeGetById(id, {c})
@@ -18,9 +18,9 @@ function Auth(c) {
     }
 
     return {
-        create: (fields) => {
-            return _create(fields, {create: storeCreate, generateHash})
-        },
+        // create: (fields) => {
+        //     return _create(fields, {create: storeCreate, generateHash})
+        // },
 
         getById: (id) => {
             return _getById(id, {getById: storeGetById, validateObjectId})
