@@ -1,8 +1,8 @@
 import {isEqualHash} from './helpers.js'
 import {validateObjectId} from '../helpers.js'
 
-import {_storeCreate, _storeGetById, _storeGetByName} from './store.js'
-import {_create, _getById, _getByName} from './controllers.js'
+import {_storeGetById, _storeGetByName} from './store.js'
+import {_getById, _getByName} from './controllers.js'
 
 function Auth(c) {
     // function storeCreate(fields) {

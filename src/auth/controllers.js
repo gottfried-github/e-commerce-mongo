@@ -65,7 +65,6 @@ async function _getByName(name, password, {getByName, isEqualHash}) {
 }
 
 export {
-    _create,
     _getById,
     _getByName,
 }

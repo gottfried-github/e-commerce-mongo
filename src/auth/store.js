@@ -31,7 +31,6 @@ async function _storeGetByName(name, {c}) {
 }
 
 export {
-    _storeCreate,
     _storeGetById,
     _storeGetByName,
 }
