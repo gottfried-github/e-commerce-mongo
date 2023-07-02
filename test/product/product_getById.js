@@ -1,7 +1,7 @@
 import {assert} from 'chai'
 import {ObjectId} from 'bson'
 
-import * as m from '../../../fi-common/messages.js'
+import * as m from '../../../e-commerce-common/messages.js'
 
 import {_getById} from '../../src/product/controllers.js'
 import {ValidationConflict} from '../../src/helpers.js'
