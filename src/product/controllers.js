@@ -1,4 +1,4 @@
-import * as m from '../../../fi-common/messages.js'
+import * as m from '../../../e-commerce-common/messages.js'
 
 import {ValidationError} from '../helpers.js'
 

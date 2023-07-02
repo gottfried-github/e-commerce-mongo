@@ -1,6 +1,6 @@
 import {assert} from 'chai'
 
-import * as m from '../../../fi-common/messages.js'
+import * as m from '../../../e-commerce-common/messages.js'
 import {ValidationError, ValidationConflict} from '../../src/helpers.js'
 
 import {_createMany} from '../../src/photo/controllers.js'

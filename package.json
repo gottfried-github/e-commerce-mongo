@@ -1,7 +1,7 @@
 {
-  "name": "bazar-mongo",
+  "name": "e-commerce-mongo",
   "version": "0.15.0",
-  "description": "mongodb implementation of bazar e-commerce storage",
+  "description": "mongodb implementation of storage for node-js e-commerce",
   "main": "src/index.js",
   "type": "module",
   "scripts": {

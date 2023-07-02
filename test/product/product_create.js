@@ -1,5 +1,5 @@
 import {assert} from 'chai'
-import * as m from '../../../fi-common/messages.js'
+import * as m from '../../../e-commerce-common/messages.js'
 
 import {_create} from '../../src/product/controllers.js'
 import {ValidationConflict} from '../../src/helpers.js'

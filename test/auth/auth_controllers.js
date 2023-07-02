@@ -1,7 +1,7 @@
 import {assert} from 'chai'
 import {ObjectId, Binary} from 'bson'
 
-import * as m from '../../../fi-common/messages.js'
+import * as m from '../../../e-commerce-common/messages.js'
 import {ValidationError, ValueNotUnique, ValidationConflict} from '../../src/helpers.js'
 
 import {_create, _getById, _getByName} from '../../src/auth/controllers.js'
