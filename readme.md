@@ -14,6 +14,12 @@ Test authentication controllers: `npm run test:auth-controllers`
 Test product photos controllers: `npm run test:photo`
 
 # Specification
+## Product and photos
+A `product` has photos, associated with it. These are stored as documents in a separate collection - `Photos` - and referenced from a `product`.
+
+1. there should be no documents in `Photos` which are not referenced from a `product`
+2. there should be no references in a `product` for which there is no documents in `Photos`
+
 ## `_storeGetMany`
 ### `expose` and `inStock`
 If `Boolean`, matches the corresponding value in the documents. Else, matches all values.
