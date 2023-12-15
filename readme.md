@@ -37,8 +37,13 @@ If falsy, doesn't apply the `$sort` stage. Otherwise, applies the stage accordin
 # Implementation
 ## Product and photos
 ### Satisfying the specification
-Let's consider a scenario, where when adding photos, writing to `Photos` succeeds but updating the `product` fails. Now we're left in a situation, which violates `1` from [Product and photos](#product-and-photos).
+1. Let's consider a scenario, where when adding photos, writing to `Photos` succeeds but updating the `product` fails. Now we're left in a situation, which violates `1` from [Product and photos](#product-and-photos).
 
-Another scenario is: when removing photos, removing them from `Photos` succeeds but removing the references from the `product` or removing the product fails. Now we're left in a situation, which violates `2` from [Product and photos](#product-and-photos), potentially - `4` from [Relation between database and files](#relation-between-database-and-files) and `5` from [Relation between database and files](#relation-between-database-and-files).
+2. Another scenario is: when removing photos, removing them from `Photos` succeeds but removing the references from the `product` or removing the product fails. Now we're left in a situation, which violates `2` from [Product and photos](#product-and-photos), `3` from [Relation between database and files](#relation-between-database-and-files), potentially - `4` from [Relation between database and files](#relation-between-database-and-files) and `5` from [Relation between database and files](#relation-between-database-and-files).
 
 ### Transactions
+Transactions solve both `1` and `2` from above.
+
+1. When the update to `product` fails, the write to `Photos` gets reversed.
+
+2. Again, when the update or delete of `product` fails, the remove operation on `Photos` gets reversed.
