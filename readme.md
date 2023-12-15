@@ -33,3 +33,12 @@ If `Boolean`, matches the corresponding value in the documents. Else, matches al
 ```
 
 If falsy, doesn't apply the `$sort` stage. Otherwise, applies the stage according to the specified order and directions.
+
+# Implementation
+## Product and photos
+### Satisfying the specification
+Let's consider a scenario, where when adding photos, writing to `Photos` succeeds but updating the `product` fails. Now we're left in a situation, which violates `1` from [Product and photos](#product-and-photos).
+
+Another scenario is: when removing photos, removing them from `Photos` succeeds but removing the references from the `product` or removing the product fails. Now we're left in a situation, which violates `2` from [Product and photos](#product-and-photos), potentially - `4` from [Relation between database and files](#relation-between-database-and-files) and `5` from [Relation between database and files](#relation-between-database-and-files).
+
+### Transactions
