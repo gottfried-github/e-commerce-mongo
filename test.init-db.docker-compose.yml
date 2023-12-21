@@ -2,7 +2,7 @@ services:
     base:
         image: mongo
         volumes: 
-            - ../data_test:/data/db
+            - ./data_test:/data/db
             - .:/e-commerce-mongo
         ports: 
             - 27017:27017
@@ -12,12 +12,12 @@ services:
         command:
             '--replSet rs0 --keyFile /data/db/keyfile --bind_ip base --dbpath /data/db'
         healthcheck:
-            test: ["CMD", "bash", "-c", "/e-commerce-common/healthcheck.sh"]
+            test: ["CMD", "bash", "-c", "/e-commerce-mongo/test.healthcheck.sh"]
 
     init:
         build:
             context: .
-            dockerfile: ./init-db.Dockerfile
+            dockerfile: ./test.init-db.Dockerfile
         environment:
             # same as MONGO_INITDB_ROOT_USERNAME and MONGO_INITDB_ROOT_PASSWORD env vars in base
             ADMIN_USER: admin
