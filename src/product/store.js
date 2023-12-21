@@ -1,5 +1,7 @@
 import {ObjectId} from 'bson'
 
+import {ResourceNotFound} from '../../../e-commerce-common/messages.js'
+
 import {ValidationError, validateObjectId} from '../helpers.js'
 
 const VALIDATION_FAIL_MSG = "data validation failed"
@@ -63,20 +65,41 @@ async function _storeUpdate(id, {write, remove}, {c}) {
  * @param {ObjectId} id
  * @param {Array} photos array of ObjectId's
 */
-async function _storeUpdatePhotos(id, photos, {c}) {
-    let res = null
+async function _storeAddPhotos(id, photos, {photos, product}) {
+    const session = client.startSession()
 
-    try {
-        res = await c.updateOne({_id: new ObjectId(id)}, {$push: {photos_all: {$each: photos}}})
-    } catch (e) {
-        if (121 === e.code) e = new ValidationError(VALIDATION_FAIL_MSG, e)
-        throw e
-    }
+    await session.withTransaction(async () => {
+        let photosRes = null
 
-    if (!res.matchedCount) return null
-    if (!res.modifiedCount) return false
+        try {
+            photosRes = await photos.insertMany(photos, {session})
+        } catch(e) {
+            if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, {
+                index: e.writeErrors[0].err.index,
+                err: e
+            })
+    
+            throw e
+        }
+    
+        const photosIds = Object.keys(photosRes.insertedIds).map(k => photosRes.insertedIds[k])
 
-    return true
+        let productRes = null
+        
+        try {
+            productRes = await product.updateOne({_id: new ObjectId(id)}, {$push: {photos_all: {$each: photosIds}}}, {session})
+        } catch (e) {
+            if (121 === e.code) e = new ValidationError(VALIDATION_FAIL_MSG, e)
+            throw e
+        }
+    
+        if (!productRes.matchedCount) throw ResourceNotFound.create("product with given id doesn't exist") // this should be a 404 error
+        if (!productRes.modifiedCount) throw new Error("photos written into Photo but not written into product.photos_all") // it's impossible that the photosIds already existed in the product
+        
+        return true
+    })
+
+    session.endSession()
 }
 
 async function _storeDelete(id, {c}) {
