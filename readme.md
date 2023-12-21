@@ -47,3 +47,55 @@ Transactions solve both `1` and `2` from above.
 1. When the update to `product` fails, the write to `Photos` gets reversed.
 
 2. Again, when the update or delete of `product` fails, the remove operation on `Photos` gets reversed.
+
+# Testing
+To set up testing environment, follow these instructions.
+
+## 1. Preparations
+If you have the `data_test` directory, then skip this step.
+
+`./test.init.sh`
+
+## 2. Init database
+If you have already run this command in the past, then skip this step.
+
+`docker compose -f test.init-db.docker-compose.yml up --build`
+
+Wait a few moments to make sure the script has connected to the database and initialized it (you should see `mongosh` logs from the `init` container in the stdout). Then you can interrupt (`CTRL+c`).
+
+## 3. Execute migrations (up)
+### Prepare `package.json`
+Temporarily remove the `"type": "module"` declaration from `package.json` [`1`].
+
+### Run the commands
+1. `docker compose -f test.run.docker-compose.yml run bash`
+
+Inside the running container:
+
+2. `/e-commerce-mongo/test.migrations-up.sh`
+
+### Undo changes to `package.json`
+Put the `"type": "module"` declaration back into `package.json`
+
+## 4. Run the tests
+If you have the container running from `1` in the previous section, then skip this step:
+
+1. `docker compose -f test.run.docker-compose.yml run bash`
+
+Inside the running container:
+
+2. `npm run test:db`
+
+## 5. After testing, clean up the environment
+We need to unwind the migrations. We're going to use `migrate-mongo`, so we need to temporarily remove the `"type": "module"` declaration from `package.json` again, as we did in [`2`](2.-init-database).
+
+Now, if you have the container running from the [previous steps](4.-run-the-tests), you can skip this step:
+
+1. `docker compose -f test.run.docker-compose.yml run bash`
+
+Inside the running container, run:
+
+`/e-commerce-mongo/test.migrations-down.sh`
+
+# Notes
+1. `migrate-mongo`, which is run in `test.migrations-up.sh`, doesn't work with es6 modules.
