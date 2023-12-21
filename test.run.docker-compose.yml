@@ -2,7 +2,7 @@ services:
     base:
         image: mongo
         volumes: 
-            - ../data_test:/data/db
+            - ./data_test:/data/db
             - .:/e-commerce-mongo
         ports: 
             - 27017:27017
@@ -12,13 +12,13 @@ services:
             MONGO_INITDB_ROOT_USERNAME: admin
             MONGO_INITDB_ROOT_PASSWORD: asdopihjwefpiub
         healthcheck:
-            test: ["CMD", "bash", "-c", "/e-commerce-mongo/healthcheck.sh"]
+            test: ["CMD", "bash", "-c", "/e-commerce-mongo/test.healthcheck.sh"]
     node:
         build: 
             context: .
             dockerfile: ./test.run.Dockerfile
         volumes:
-            - ..:/e-commerce-mongo
+            - .:/e-commerce-mongo
         ports:
             - 3000:3000
         environment: 

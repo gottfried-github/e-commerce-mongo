@@ -68,7 +68,7 @@ Wait a few moments to make sure the script has connected to the database and ini
 Temporarily remove the `"type": "module"` declaration from `package.json` [`1`].
 
 ### Run the commands
-1. `docker compose -f test.run.docker-compose.yml run bash`
+1. `docker compose -f test.run.docker-compose.yml run node bash`
 
 Inside the running container:
 
@@ -93,7 +93,7 @@ Now, if you have the container running from the [previous steps](4.-run-the-test
 
 1. `docker compose -f test.run.docker-compose.yml run bash`
 
-Inside the running container, run:
+Inside the running container, run this until all migrations are migrated down:
 
 `/e-commerce-mongo/test.migrations-down.sh`
 
