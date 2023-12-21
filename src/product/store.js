@@ -65,41 +65,50 @@ async function _storeUpdate(id, {write, remove}, {c}) {
  * @param {ObjectId} id
  * @param {Array} photos array of ObjectId's
 */
-async function _storeAddPhotos(id, photos, {photos, product}) {
+async function _storeAddPhotos(id, photos, {client, photos, product}) {
     const session = client.startSession()
 
-    await session.withTransaction(async () => {
-        let photosRes = null
+    let res = null
 
-        try {
-            photosRes = await photos.insertMany(photos, {session})
-        } catch(e) {
-            if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, {
-                index: e.writeErrors[0].err.index,
-                err: e
-            })
+    try {
+        res = await session.withTransaction(async () => {
+            let photosRes = null
     
-            throw e
-        }
-    
-        const photosIds = Object.keys(photosRes.insertedIds).map(k => photosRes.insertedIds[k])
-
-        let productRes = null
+            try {
+                photosRes = await photos.insertMany(photos, {session})
+            } catch(e) {
+                if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, {
+                    index: e.writeErrors[0].err.index,
+                    err: e
+                })
         
-        try {
-            productRes = await product.updateOne({_id: new ObjectId(id)}, {$push: {photos_all: {$each: photosIds}}}, {session})
-        } catch (e) {
-            if (121 === e.code) e = new ValidationError(VALIDATION_FAIL_MSG, e)
-            throw e
-        }
-    
-        if (!productRes.matchedCount) throw ResourceNotFound.create("product with given id doesn't exist") // this should be a 404 error
-        if (!productRes.modifiedCount) throw new Error("photos written into Photo but not written into product.photos_all") // it's impossible that the photosIds already existed in the product
+                throw e
+            }
         
-        return true
-    })
+            const photosIds = Object.keys(photosRes.insertedIds).map(k => photosRes.insertedIds[k])
+    
+            let productRes = null
+            
+            try {
+                productRes = await product.updateOne({_id: new ObjectId(id)}, {$push: {photos_all: {$each: photosIds}}}, {session})
+            } catch (e) {
+                if (121 === e.code) e = new ValidationError(VALIDATION_FAIL_MSG, e)
+                throw e
+            }
+        
+            if (!productRes.matchedCount) throw ResourceNotFound.create("product with given id doesn't exist") // this should be a 404 error
+            if (!productRes.modifiedCount) throw new Error("photos written into Photo but not written into product.photos_all") // it's impossible that the photosIds already existed in the product
+            
+            return true
+        })
+    } catch(e) {
+        await session.endSession()
 
-    session.endSession()
+        throw e
+    }
+
+    await session.endSession()
+    return res
 }
 
 async function _storeDelete(id, {c}) {
@@ -384,4 +393,4 @@ async function _storeGetMany(expose, inStock, sortOrder, {c}) {
     return res
 }
 
-export {_storeCreate, _storeUpdate, _storeUpdatePhotos, _storeDelete, _storeGetById, _storeGetByIdRaw, _storeGetMany}
+export {_storeCreate, _storeUpdate, _storeAddPhotos, _storeDelete, _storeGetById, _storeGetByIdRaw, _storeGetMany}

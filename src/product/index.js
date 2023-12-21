@@ -8,7 +8,7 @@ import {
     _create, _update, _addPhotos, _delete, _getById, _getMany
 } from './controllers.js'
 
-function Product({product, photos}) {
+function Product({client, product, photos}) {
     function storeCreate(fields) {
         return _storeCreate(fields, {c: product})
     }
@@ -18,7 +18,7 @@ function Product({product, photos}) {
     }
 
     function storeAddPhotos(id, _photos) {
-        return _storeAddPhotos(id, _photos, {photos, product})
+        return _storeAddPhotos(id, _photos, {client, photos, product})
     }
 
     function storeDelete(id) {
