@@ -106,4 +106,4 @@ async function _getMany(expose, inStock, sortOrder, {getMany}) {
     return getMany(expose, inStock, sortOrder)
 }
 
-export {_create, _update, _updatePhotos, _delete, _getById, _getMany}
+export {_create, _update, _addPhotos, _delete, _getById, _getMany}
