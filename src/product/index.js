@@ -1,40 +1,40 @@
 import {validateObjectId, containsId} from '../helpers.js'
 
 import {
-  _storeCreate, _storeUpdate, _storeUpdatePhotos, _storeDelete, _storeGetById, _storeGetByIdRaw, _storeGetMany
+  _storeCreate, _storeUpdate, _storeAddPhotos, _storeDelete, _storeGetById, _storeGetByIdRaw, _storeGetMany
 } from './store.js'
 
 import {
-    _create, _update, _updatePhotos, _delete, _getById, _getMany
+    _create, _update, _addPhotos, _delete, _getById, _getMany
 } from './controllers.js'
 
-function Product(c) {
+function Product({client, product, photos}) {
     function storeCreate(fields) {
-        return _storeCreate(fields, {c})
+        return _storeCreate(fields, {c: product})
     }
 
     function storeUpdate(id, fields) {
-        return _storeUpdate(id, fields, {c})
+        return _storeUpdate(id, fields, {c: product})
     }
 
-    function storeUpdatePhotos(id, photos) {
-        return _storeUpdatePhotos(id, photos, {c})
+    function storeAddPhotos(id, _photos) {
+        return _storeAddPhotos(id, _photos, {client, photos, product})
     }
 
     function storeDelete(id) {
-        return _storeDelete(id, {c})
+        return _storeDelete(id, {c: product})
     }
 
     function storeGetById(id) {
-        return _storeGetById(id, {c})
+        return _storeGetById(id, {c: product})
     }
 
     function storeGetByIdRaw(id) {
-        return _storeGetByIdRaw(id, {c})
+        return _storeGetByIdRaw(id, {c: product})
     }
 
     function storeGetMany(expose, inStock, sortOrder) {
-        return _storeGetMany(expose, inStock, sortOrder, {c})
+        return _storeGetMany(expose, inStock, sortOrder, {c: product})
     }
 
     return {
@@ -54,8 +54,8 @@ function Product(c) {
             return _update(id, fields, {update: storeUpdate, validateObjectId, containsId})
         },
 
-        updatePhotos: (id, photos) => {
-            return _updatePhotos(id, photos, {updatePhotos: storeUpdatePhotos, validateObjectId})
+        addPhotos: (id, photos) => {
+            return _addPhotos(id, photos, {addPhotos: storeAddPhotos, validateObjectId})
         },
 
         delete: async (id) => {
