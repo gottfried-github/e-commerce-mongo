@@ -84,7 +84,7 @@ If you have the container running from `1` in the previous section, then skip th
 
 Inside the running container:
 
-2. `npm run test:db`
+2. `npm run test:store`
 
 ## 5. After testing, clean up the environment
 We need to unwind the migrations. We're going to use `migrate-mongo`, so we need to temporarily remove the `"type": "module"` declaration from `package.json` again, as we did in [`2`](2.-init-database).
