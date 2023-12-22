@@ -65,7 +65,7 @@ async function _storeUpdate(id, {write, remove}, {c}) {
  * @param {ObjectId} id
  * @param {Array} photos array of ObjectId's
 */
-async function _storeAddPhotos(id, photos, {client, photos, product}) {
+async function _storeAddPhotos(id, photos, {client, photo, product}) {
     const session = client.startSession()
 
     let res = null
@@ -75,7 +75,7 @@ async function _storeAddPhotos(id, photos, {client, photos, product}) {
             let photosRes = null
     
             try {
-                photosRes = await photos.insertMany(photos, {session})
+                photosRes = await photo.insertMany(photos, {session})
             } catch(e) {
                 if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, {
                     index: e.writeErrors[0].err.index,
@@ -107,8 +107,16 @@ async function _storeAddPhotos(id, photos, {client, photos, product}) {
         throw e
     }
 
+    // for some reason, withTransaction returns an object with the `ok` property instead of the return value of the callback
+    if (res.ok !== 1) {
+        const e = new Error('transaction completed but return value is not ok')
+        e.data = res
+
+        throw e
+    }
+
     await session.endSession()
-    return res
+    return true
 }
 
 async function _storeDelete(id, {c}) {
