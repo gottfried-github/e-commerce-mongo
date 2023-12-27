@@ -31,5 +31,8 @@
     "bazar-api": "file:../e-shop/app",
     "bson": "^4.6.2",
     "mongodb": "^4.5.0"
+  },
+  "eCommerceDependencies": {
+    "e-commerce-spec": "0.1.0"
   }
 }
