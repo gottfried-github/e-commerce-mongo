@@ -18,7 +18,7 @@ function Product({client, product, photos}) {
     }
 
     function storeAddPhotos(id, _photos) {
-        return _storeAddPhotos(id, _photos, {client, photos, product})
+        return _storeAddPhotos(id, _photos, {client, photo: photos, product})
     }
 
     function storeDelete(id) {

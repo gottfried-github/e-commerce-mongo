@@ -1,4 +1,4 @@
-import {shema as schemaPrev} from '20221204174005-photos.js'
+const migrationPrev = require('./20221204174005-photos.js')
 
 const schema = {
   bsonType: 'object',
@@ -8,12 +8,12 @@ const schema = {
       bsonType: 'string',
       minLength: 1,
       maxLength: 1000,
+    },
+    pathLocal: {
+      bsonType: 'string',
+        minLength: 1,
+        maxLength: 1000,
     }
-  },
-  pathLocal: {
-    bsonType: 'string',
-      minLength: 1,
-      maxLength: 1000,
   },
   required: ['_id', 'pathPublic', 'pathLocal'],
   additionalProperties: false
@@ -32,7 +32,7 @@ module.exports = {
     return db.command({
       collMod: "photo",
       validator: {
-          $jsonSchema: schemaPrev
+          $jsonSchema: migrationPrev.schema
       }
     })
   },
