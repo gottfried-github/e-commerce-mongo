@@ -53,7 +53,7 @@ async function _update(id, {write, remove}, {update, validateObjectId, containsI
     return true
 }
 
-async function _updatePhotos(id, photos, {updatePhotos, validateObjectId}) {
+async function _addPhotos(id, photos, {addPhotos, validateObjectId}) {
     let res = null
 
     const idE = validateObjectId(id)
@@ -62,7 +62,7 @@ async function _updatePhotos(id, photos, {updatePhotos, validateObjectId}) {
     if (idE) throw m.InvalidCriterion.create(idE.message, idE)
 
     try {
-        res = await updatePhotos(id, photos)
+        res = await addPhotos(id, photos)
     } catch(e) {
         if (e instanceof ValidationError) {
             throw m.ValidationError.create('mongoDB builtin validation failed', null, e.data)
@@ -106,4 +106,4 @@ async function _getMany(expose, inStock, sortOrder, {getMany}) {
     return getMany(expose, inStock, sortOrder)
 }
 
-export {_create, _update, _updatePhotos, _delete, _getById, _getMany}
+export {_create, _update, _addPhotos, _delete, _getById, _getMany}

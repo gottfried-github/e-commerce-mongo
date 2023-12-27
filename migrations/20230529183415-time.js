@@ -1,4 +1,4 @@
-const schemaPrev = require('./20221204173340-product-photos.js')
+const schemaPrev = require('./20221204173340-product-photos.js').schema
 
 const rest = {
     _id: {bsonType: 'objectId'},
