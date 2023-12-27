@@ -208,7 +208,8 @@ async function _storeGetById(id, {c}) {
                     as: 'photo',
                     in: {
                         id: '$$photo._id',
-                        path: '$$photo.path'
+                        pathPublic: '$$photo.pathPublic',
+                        pathLocal: '$$photo.pathLocal'
                     }
                 }},
                 else: null
@@ -220,7 +221,8 @@ async function _storeGetById(id, {c}) {
                     as: 'photo',
                     in: {
                         id: '$$photo._id',
-                        path: '$$photo.path'
+                        pathPublic: '$$photo.pathPublic',
+                        pathLocal: '$$photo.pathLocal'
                     }
                 }},
                 else: null
@@ -356,7 +358,8 @@ async function _storeGetMany(expose, inStock, sortOrder, {c}) {
                     as: 'photo',
                     in: {
                         id: '$$photo._id',
-                        path: '$$photo.path'
+                        pathPublic: '$$photo.pathPublic',
+                        pathLocal: '$$photo.pathLocal'
                     }
                 }},
                 else: null
@@ -368,7 +371,8 @@ async function _storeGetMany(expose, inStock, sortOrder, {c}) {
                     as: 'photo',
                     in: {
                         id: '$$photo._id',
-                        path: '$$photo.path'
+                        pathPublic: '$$photo.pathPublic',
+                        pathLocal: '$$photo.pathLocal'
                     }
                 }},
                 else: null
