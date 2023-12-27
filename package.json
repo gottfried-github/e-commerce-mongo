@@ -1,6 +1,6 @@
 {
   "name": "e-commerce-mongo",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "mongodb implementation of storage for node-js e-commerce",
   "main": "src/index.js",
   "type": "module",
