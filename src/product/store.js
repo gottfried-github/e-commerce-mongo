@@ -219,6 +219,98 @@ async function _storeReorderPhotos(productId, photos, {client, photo}) {
     return true
 }
 
+async function _storeUpdatePhotosPublicity(productId, photos, {client, photo, product}) {
+    const session = client.startSession()
+    
+    let res = null
+
+    try {
+        session.withTransaction(async () => {
+            for (const _photo of photos) {
+                const update = {$set: {}}
+
+                if (_photo.public === true) {
+                    const _photoDoc = await photo.findOne({
+                        productId: new ObjectId(productId),
+                        _id: new ObjectId(_photo.id)
+                    })
+
+                    if (!_photoDoc) throw ResourceNotFound.create("a photo doesn't belong to the given product")
+
+                    // prevent changing order of an already public photo
+                    if (_photoDoc.public) throw new Error("a photo, set to public is already public") // the error should be treated as 400: bad input
+
+                    update.$set.public = _photo.public
+
+                    const photosDocs = await photo.find({
+                        productId: new ObjectId(productId),
+                        public: true
+                    }, {session})
+                        .sort('order', 1)
+                        .toArray()
+
+                    update.$set.order = photosDocs.length > 0
+                        ? photosDocs[photosDocs.length - 1].order + 1
+                        : 0
+                        
+                } else if (_photo.public === false) {
+                    update.$set.public = false
+                    update.$unset = {
+                        order: ''
+                    }
+                }
+
+                const res = await photo.updateOne({
+                    productId: new ObjectId(productId),
+                    _id: new ObjectId(_photo.id)
+                }, update, {session})
+
+                if (!res.matchedCount) throw new Error("a photo doesn't belong to the given product")
+            }
+
+            const photosDocs = await photo.find({
+                productId: new ObjectId(productId),
+                public: true
+            }).toArray()
+
+            if (!photosDocs.length) {
+                try {
+                    await product.updateOne({
+                        _id: new ObjectId(productId)
+                    }, {
+                        $set: {
+                            expose: false
+                        }
+                    })
+                } catch (e) {
+                    if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
+                    throw e
+                }
+            }
+
+            return true
+        })
+    } catch (e) {
+        await session.endSession()
+
+        throw e
+    }
+
+    // for some reason, withTransaction returns an object with the `ok` property instead of the return value of the callback
+    if (res.ok !== 1) {
+        await session.endSession()
+        
+        const e = new Error('transaction completed but return value is not ok')
+        e.data = res
+
+        throw e
+    }
+
+    await session.endSession()
+
+    return true
+}
+
 async function _storeDelete(id, {c}) {
     const res = await c.deleteOne({_id: new ObjectId(id)})
     if (0 === res.deletedCount) return null
