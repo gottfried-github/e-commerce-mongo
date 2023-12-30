@@ -126,6 +126,7 @@ async function _storeRemovePhotos(productId, photoIds, {client, photo, product})
                         }
                     })
                 } catch (e) {
+                    if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
                     throw e
                 }
 
@@ -133,6 +134,51 @@ async function _storeRemovePhotos(productId, photoIds, {client, photo, product})
                 if (resProduct.modifiedCount === 0) throw new Error("product's expose field doesn't get updated")
 
                 return true
+            }
+
+            return true
+        })
+    } catch (e) {
+        await session.endSession()
+
+        throw e
+    }
+
+    // for some reason, withTransaction returns an object with the `ok` property instead of the return value of the callback
+    if (res.ok !== 1) {
+        await session.endSession()
+        
+        const e = new Error('transaction completed but return value is not ok')
+        e.data = res
+
+        throw e
+    }
+
+    await session.endSession()
+
+    return true
+}
+
+async function _storeReorderPhotos(productId, photos, {client, photo}) {
+    const photosDocs = await photo.find({productId}).toArray()
+
+    if (photosDocs.length !== photos.length) throw new Error("must pass all photos, relating to the given product and only the photos that relate to the given product")
+
+    const session = client.startSession()
+
+    try {
+        session.withTransaction(async () => {
+            for (const _photo of photos) {
+                try {
+                    await photo.updateOne({_id: _photo.id}, {
+                        $set: {
+                            order: _photo.order
+                        }
+                    })
+                } catch (e) {
+                    if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
+                    throw e
+                }
             }
 
             return true
