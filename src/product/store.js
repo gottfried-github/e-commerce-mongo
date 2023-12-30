@@ -7,9 +7,9 @@ import {ValidationError, validateObjectId} from '../helpers.js'
 const VALIDATION_FAIL_MSG = "data validation failed"
 
 async function _storeCreate(fields, {c}) {
-    let res = null
-
     if (fields.time) fields.time = new Date(fields.time)
+    
+    let res = null
     
     try {
         res = await c.insertOne(fields)
@@ -33,7 +33,7 @@ function _wrapPhoto(photo) {
     @param {id, in Types} id
 */
 async function _storeUpdate(id, {write, remove}, {product, photo}) {
-    if (write?.expose) {
+    if (write?.expose === true) {
         const photosPublic = await photo.find({
             productId: new ObjectId(id),
             public: true
