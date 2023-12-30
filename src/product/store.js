@@ -103,11 +103,11 @@ async function _storeRemovePhotos(productId, photoIds, {client, photo, product})
             // API should respond with 400: bad input
             if (resDelete.deletedCount < photoIds) throw ResourceNotFound.create("not all given photos belong to the given product")
 
-            const product = await product.findOne({_id: productId}, {session})
+            const _product = await product.findOne({_id: productId}, {session})
 
-            if (!product) throw ResourceNotFound.create("given product doesn't exist")
+            if (!_product) throw ResourceNotFound.create("given product doesn't exist")
 
-            if (!product.expose) return true
+            if (!_product.expose) return true
 
             const photosPublic = await photo.find({
                 productId,
