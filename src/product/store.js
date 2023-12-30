@@ -32,20 +32,35 @@ function _wrapPhoto(photo) {
 /**
     @param {id, in Types} id
 */
-async function _storeUpdate(id, {write, remove}, {c}) {
+async function _storeUpdate(id, {write, remove}, {product, photo}) {
+    if (write?.expose) {
+        const photosPublic = await photo.find({
+            productId: new ObjectId(id),
+            public: true
+        }).toArray()
+
+        const photoCover = await photo.findOne({
+            productId: new ObjectId(id),
+            cover: true
+        })
+
+        if (!photosPublic.length || !photoCover) throw new ValidationError("can't set expose to true: product has no public photos and/or cover photo", e)
+    }
+
+    if (write?.time) write.time = new Date(write.time)
+
+    const query = {}
+    if (write) query.$set = write
+
+    if (remove) {
+        query.$unset = {}
+        remove.forEach(fieldName => query.$unset[fieldName] = '')
+    }
+
     let res = null
+    
     try {
-        if (write?.time) write.time = new Date(write.time)
-
-        const query = {}
-        if (write) query.$set = write
-
-        if (remove) {
-            query.$unset = {}
-            remove.forEach(fieldName => query.$unset[fieldName] = '')
-        }
-
-        res = await c.updateOne({_id: new ObjectId(id)}, query, {upsert: false})
+        res = await product.updateOne({_id: new ObjectId(id)}, query, {upsert: false})
     } catch(e) {
         if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
         throw e
