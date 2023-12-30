@@ -138,12 +138,22 @@ async function _storeRemovePhotos(productId, photoIds, {client, photo, product})
             return true
         })
     } catch (e) {
-        await client.endSession()
+        await session.endSession()
 
         throw e
     }
 
-    await client.endSession()
+    // for some reason, withTransaction returns an object with the `ok` property instead of the return value of the callback
+    if (res.ok !== 1) {
+        await session.endSession()
+        
+        const e = new Error('transaction completed but return value is not ok')
+        e.data = res
+
+        throw e
+    }
+
+    await session.endSession()
 
     return true
 }
