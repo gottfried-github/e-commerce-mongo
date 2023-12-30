@@ -61,13 +61,13 @@ async function _storeUpdate(id, {write, remove}, {c}) {
 /**
  * @param {ObjectId} id
  * @param {Array} photos photo: {
- *      productId, pathPublic, pathLocal
+ *      pathPublic, pathLocal
  * }
 */
 async function _storeAddPhotos(id, photos, {client, photo}) {
     const _photos = photos.map(photo => ({
         ...photo,
-        productId: new ObjectId(photo.productId),
+        productId: new ObjectId(id),
         public: false,
         cover: false,
     }))
@@ -84,6 +84,66 @@ async function _storeAddPhotos(id, photos, {client, photo}) {
     }
 
     if (res.insertedCount !== _photos.length) throw new Error("insertedCount is not the same as the number of given photos")
+
+    return true
+}
+
+async function _storeRemovePhotos(productId, photoIds, {client, photo, product}) {
+    const session = client.startSession()
+
+    let res = null
+
+    try {
+        res = await session.withTransaction(async () => {
+            const resDelete = await photo.deleteMany({
+                productId,
+                _id: {$in: photoIds.map(id => new ObjectId(id))}
+            })
+
+            // API should respond with 400: bad input
+            if (resDelete.deletedCount < photoIds) throw ResourceNotFound.create("not all given photos belong to the given product")
+
+            const product = await product.findOne({_id: productId}, {session})
+
+            if (!product) throw ResourceNotFound.create("given product doesn't exist")
+
+            if (!product.expose) return true
+
+            const photosPublic = await photo.find({
+                productId,
+                public: true
+            }, {session}).toArray()
+
+            const photoCover = await photo.findOne({productId, cover: true}, {session})
+
+            if (!photosPublic.length || !photoCover) {
+                let resProduct = null
+
+                try {
+                    await product.updateOne({_id: productId}, {
+                        $set: {
+                            expose: false
+                        }
+                    })
+                } catch (e) {
+                    throw e
+                }
+
+                if (!resProduct.matchedCount) throw new Error("updateOne doesn't match existing product")
+                if (resProduct.modifiedCount === 0) throw new Error("product's expose field doesn't get updated")
+
+                return true
+            }
+
+            return true
+        })
+    } catch (e) {
+        await client.endSession()
+
+        throw e
+    }
+
+    await client.endSession()
 
     return true
 }
