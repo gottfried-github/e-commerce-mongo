@@ -60,61 +60,31 @@ async function _storeUpdate(id, {write, remove}, {c}) {
 
 /**
  * @param {ObjectId} id
- * @param {Array} photos array of ObjectId's
+ * @param {Array} photos photo: {
+ *      productId, pathPublic, pathLocal
+ * }
 */
-async function _storeAddPhotos(id, photos, {client, photo, product}) {
-    const session = client.startSession()
+async function _storeAddPhotos(id, photos, {client, photo}) {
+    const _photos = photos.map(photo => ({
+        ...photo,
+        productId: new ObjectId(photo.productId),
+        public: false,
+        cover: false,
+    }))
 
     let res = null
 
     try {
-        res = await session.withTransaction(async () => {
-            let photosRes = null
-    
-            try {
-                photosRes = await photo.insertMany(photos, {session})
-            } catch(e) {
-                if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, {
-                    index: e.writeErrors[0].err.index,
-                    err: e
-                })
-        
-                throw e
-            }
-        
-            const photosIds = Object.keys(photosRes.insertedIds).map(k => photosRes.insertedIds[k])
-    
-            let productRes = null
-            
-            try {
-                productRes = await product.updateOne({_id: new ObjectId(id)}, {$push: {photos_all: {$each: photosIds}}}, {session})
-            } catch (e) {
-                if (121 === e.code) e = new ValidationError(VALIDATION_FAIL_MSG, e)
-                throw e
-            }
-        
-            if (!productRes.matchedCount) throw ResourceNotFound.create("product with given id doesn't exist") // this should be a 404 error
-            if (!productRes.modifiedCount) throw new Error("photos written into Photo but not written into product.photos_all") // it's impossible that the photosIds already existed in the product
-            
-            return true
-        })
+        res = await photo.insertMany(_photos)
     } catch(e) {
-        await session.endSession()
+        // 121 is validation error: erroneous response example in https://www.mongodb.com/docs/manual/core/schema-validation/#existing-documents
+        if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
 
         throw e
     }
 
-    // for some reason, withTransaction returns an object with the `ok` property instead of the return value of the callback
-    if (res.ok !== 1) {
-        await session.endSession()
-        
-        const e = new Error('transaction completed but return value is not ok')
-        e.data = res
+    if (res.insertedCount !== _photos.length) throw new Error("insertedCount is not the same as the number of given photos")
 
-        throw e
-    }
-
-    await session.endSession()
     return true
 }
 
