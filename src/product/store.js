@@ -33,6 +33,10 @@ function _wrapPhoto(photo) {
     @param {id, in Types} id
 */
 async function _storeUpdate(id, {write, remove}, {product, photo}) {
+    const productDoc = await product.findOne({_id: new ObjectId(id)})
+
+    if (!productDoc) throw ResourceNotFound.create("given product doesn't exist")
+
     if (write?.expose === true) {
         const photosPublic = await photo.find({
             productId: new ObjectId(id),
@@ -44,7 +48,7 @@ async function _storeUpdate(id, {write, remove}, {product, photo}) {
             cover: true
         })
 
-        if (!photosPublic.length || !photoCover) throw new ValidationError("can't set expose to true: product has no public photos and/or cover photo", e)
+        if (!photosPublic.length || !photoCover) throw new ValidationError("can't set expose to true: product has no public photos and/or cover photo")
     }
 
     if (write?.time) write.time = new Date(write.time)
@@ -66,7 +70,7 @@ async function _storeUpdate(id, {write, remove}, {product, photo}) {
         throw e
     }
 
-    if (!res.matchedCount) return null
+    if (!res.matchedCount) throw new Error("given product found during find but not matched during update")
     if (!res.modifiedCount) return false
     // if (!res.matchedCount) throw m.ResourceNotFound.create("the given id didn't match any products")
 
