@@ -3,18 +3,18 @@ const schemaPrev = require('./20231227152752-photo.js').schema
 const schemaBase = {...schemaPrev}
 
 schemaBase.properties.productId = {bsonType: 'objectId'}
-schemaBase.properties.cover = {bsonType: 'boolean'}
+schemaBase.properties.cover = {bsonType: 'bool'}
 schemaBase.required.push('productId', 'cover', 'public')
 
 const schemaNotPublic = {...schemaBase}
 schemaNotPublic.properties.public = {
-  bsonType: 'boolean',
+  bsonType: 'bool',
   enum: [false]
 }
 
 const schemaPublic = {...schemaBase}
 schemaPublic.properties.public = {
-  bsonType: 'boolean',
+  bsonType: 'bool',
   enum: [true]
 }
 schemaPublic.properties.order = {bsonType: 'int'}
