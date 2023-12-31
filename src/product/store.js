@@ -79,10 +79,14 @@ async function _storeUpdate(id, {write, remove}, {product, photo}) {
  *      pathPublic, pathLocal
  * }
 */
-async function _storeAddPhotos(id, photos, {client, photo}) {
+async function _storeAddPhotos(productId, photos, {product, photo}) {
+    const product = await product.findOne({_id: new ObjectId(productId)})
+
+    if (!product) throw ResourceNotFound.create("given product doesn't exist")
+
     const _photos = photos.map(photo => ({
         ...photo,
-        productId: new ObjectId(id),
+        productId: new ObjectId(productId),
         public: false,
         cover: false,
     }))
