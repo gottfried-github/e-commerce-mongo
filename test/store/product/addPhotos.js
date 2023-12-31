@@ -100,12 +100,11 @@ export default function addPhotos(client) {
                 try {
                     res = await _storeAddPhotos(productRes.insertedId, photos, {product, photo})
                 } catch (e) {
-                    console.log('_storeAddPhotos threw - e:', e)
                     assert.fail(e, true, 'expected to return "true", instead, threw the error')
                 }
     
                 const photosWritten = await photo.find({pathPublic: {
-                    $in: ['1', '2', '3']
+                    $in: ['0', '1', '2']
                 }}).toArray()
 
                 console.log('photosWritten:', photosWritten)

@@ -6,13 +6,13 @@ schemaBase.properties.productId = {bsonType: 'objectId'}
 schemaBase.properties.cover = {bsonType: 'bool'}
 schemaBase.required.push('productId', 'cover', 'public')
 
-const schemaNotPublic = {...schemaBase}
+const schemaNotPublic = JSON.parse(JSON.stringify(schemaBase))
 schemaNotPublic.properties.public = {
   bsonType: 'bool',
   enum: [false]
 }
 
-const schemaPublic = {...schemaBase}
+const schemaPublic = JSON.parse(JSON.stringify(schemaBase))
 schemaPublic.properties.public = {
   bsonType: 'bool',
   enum: [true]

@@ -13,8 +13,6 @@ delete schema.oneOf[1].properties.photos
 delete schema.oneOf[1].properties.photos_all
 delete schema.oneOf[1].properties.cover_photo
 
-console.log('migration, product, schema.oneOf[0]:', schema.oneOf[0])
-
 module.exports = {
   async up(db, client) {
     return db.command({
