@@ -17,13 +17,22 @@ export default function addPhotos(client) {
                 let res = null
     
                 const photos = [
-                    {path: '3'},
-                    {path: '4'},
-                    {path: '5'},
+                    {
+                        pathPublic: '3',
+                        pathLocal: '3'
+                    },
+                    {
+                        pathPublic: '4',
+                        pathLocal: '4'
+                    },
+                    {
+                        pathPublic: '5',
+                        pathLocal: '5'
+                    },
                 ]
 
                 try {
-                    res = await _storeAddPhotos(new ObjectId(), photos, {client, product, photo})
+                    res = await _storeAddPhotos(new ObjectId(), photos, {product, photo})
                 } catch (e) {
                     console.log('_storeAddPhotos threw - e:', e)
                     if (ResourceNotFound.code !== e.code) {
@@ -34,7 +43,7 @@ export default function addPhotos(client) {
                         assert.fail(e, true, 'expected to throw ResourceNotFound, instead, threw a different error')
                     }
 
-                    const photosWritten = await photo.find({path: {
+                    const photosWritten = await photo.find({pathPublic: {
                         $in: ['3', '4', '5']
                     }}).toArray()
     
