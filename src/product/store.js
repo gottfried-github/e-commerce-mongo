@@ -252,7 +252,7 @@ async function _storeUpdatePhotosPublicity(productId, photos, {client, photo, pr
                     update.$set.order = photosDocs.length > 0
                         ? photosDocs[photosDocs.length - 1].order + 1
                         : 0
-                        
+
                 } else if (_photo.public === false) {
                     update.$set.public = false
                     update.$unset = {
@@ -289,6 +289,122 @@ async function _storeUpdatePhotosPublicity(productId, photos, {client, photo, pr
             }
 
             return true
+        })
+    } catch (e) {
+        await session.endSession()
+
+        throw e
+    }
+
+    // for some reason, withTransaction returns an object with the `ok` property instead of the return value of the callback
+    if (res.ok !== 1) {
+        await session.endSession()
+        
+        const e = new Error('transaction completed but return value is not ok')
+        e.data = res
+
+        throw e
+    }
+
+    await session.endSession()
+
+    return true
+}
+
+async function _storeSetCoverPhoto(productId, photo, {client, product, photoC}) {
+    const session = client.startSession()
+    
+    let res = null
+
+    try {
+        session.withTransaction(async () => {
+            if (photo.cover === true) {
+                const photoCoverPrev = await photoC.findOne({
+                    productId: new ObjectId(productId),
+                    cover: true
+                })
+
+                if (photoCoverPrev) {
+                    try {
+                        await photoC.updateOne({
+                            _id: photoCoverPrev._id
+                        }, {
+                            $set: {
+                                cover: false
+                            }
+                        })
+                    } catch (e) {
+                        if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
+                        throw e
+                    }
+                }
+
+                let res = null
+
+                try {
+                    res = await photoC.updateOne({
+                        productId: new ObjectId(productId),
+                        _id: photo.id
+                    }, {
+                        $set: {
+                            cover: true
+                        }
+                    })
+                } catch (e) {
+                    if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
+                    throw e
+                }
+
+                if (!res.matchedCount) throw ResourceNotFound.create("the given photo doesn't belong to the given product")
+
+                return true
+            } else if (photo.cover === false) {
+                let res = null
+
+                try {
+                    res = await photoC.updateOne({
+                        productId: new ObjectId(productId),
+                        _id: new ObjectId(photo.id)
+                    }, {
+                        $set: {
+                            cover: false
+                        }
+                    })
+                } catch (e) {
+                    if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
+                    throw e
+                }
+
+                if (!res.matchedCount) throw ResourceNotFound.create("given photo doesn't belong to the given product")
+
+                const product = await product.findOne({
+                    _id: new ObjectId(productId)
+                })
+
+                if (!product) throw ResourceNotFound.create("given product doesn't exist")
+
+                if (!product.expose) return true
+
+                let resProduct = null
+
+                try {
+                    resProduct = await product.updateOne({
+                        _id: new ObjectId(productId)
+                    }, {
+                        $set: {
+                            expose: false
+                        }
+                    })
+                } catch (e) {
+                    if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
+                    throw e
+                }
+
+                if (!resProduct.matchedCount) throw new Error("product found during find but not matched during update")
+                return true
+            } else {
+                throw new Error("photo cover must be boolean")
+            }
         })
     } catch (e) {
         await session.endSession()
