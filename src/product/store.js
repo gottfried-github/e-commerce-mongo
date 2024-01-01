@@ -7,6 +7,7 @@ import {ValidationError, validateObjectId} from '../helpers.js'
 const VALIDATION_FAIL_MSG = "data validation failed"
 
 async function _storeCreate(fields, {c}) {
+    if (fields.expose) throw new ValidationError("can't expose the product: no public photos and no cover photo")
     if (fields.time) fields.time = new Date(fields.time)
     
     let res = null
