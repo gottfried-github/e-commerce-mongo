@@ -143,7 +143,7 @@ async function _storeRemovePhotos(productId, photoIds, {client, photo, product})
                 let resProduct = null
 
                 try {
-                    await product.updateOne({_id: productId}, {
+                    resProduct = await product.updateOne({_id: productId}, {
                         $set: {
                             expose: false
                         }
