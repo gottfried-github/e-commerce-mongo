@@ -272,8 +272,89 @@ export default function removePhotos() {
         })
 
         describe("public photos are left but no cover photo left on an exposed product", () => {
-            it("sets product's expose to false", () => {
+            it("sets product's expose to false", async () => {
+                const client = new MongoClient(`mongodb://${process.env.APP_DB_USER}:${process.env.APP_DB_PASS}@${process.env.NET_NAME}/${process.env.APP_DB_NAME}`)
+                await client.connect()
 
+                const photo = client.db(process.env.APP_DB_NAME).collection('photo')
+                const product = client.db(process.env.APP_DB_NAME).collection('product')
+
+                const resProduct = await product.insertOne({
+                    name: 'product',
+                    price: 10000,
+                    time: new Date(),
+                    is_in_stock: false,
+                    description: 'some description',
+                    expose: true
+                })
+
+                const photosToLeave = [
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '0',
+                        pathLocal: '0',
+                        cover: false,
+                        public: true,
+                        order: 0,
+                    },
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '1',
+                        pathLocal: '1',
+                        cover: false,
+                        public: true,
+                        order: 1,
+                    },
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '2',
+                        pathLocal: '2',
+                        cover: false,
+                        public: false,
+                    },
+                ]
+
+                const photosToRemove = [
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '3',
+                        pathLocal: '3',
+                        cover: true,
+                        public: false,
+                    },
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '3',
+                        pathLocal: '3',
+                        cover: false,
+                        public: true,
+                        order: 2
+                    },
+                ]
+
+                const resPhotosToLeave = await photo.insertMany(photosToLeave)
+                const resPhotosToRemove = await photo.insertMany(photosToRemove)
+
+                const photosToRemoveIds = Object.keys(resPhotosToRemove.insertedIds).reduce((ids, index) => {
+                    ids[parseInt(index)] = resPhotosToRemove.insertedIds[index]
+                    return ids
+                }, [])
+
+                let resRemovePhotos = null
+
+                try {
+                    resRemovePhotos = await _storeRemovePhotos(resProduct.insertedId, photosToRemoveIds, {client, product, photo})
+                } catch (e) {
+                    await photo.deleteMany({})
+                    await product.deleteMany({})
+                    await client.close()
+
+                    return assert.fail("_storeRemovePhotos threw")
+                }
+
+                const productDoc = await product.findOne({_id: resProduct.insertedId})
+
+                assert(!productDoc.expose)
             })
         })
     })
