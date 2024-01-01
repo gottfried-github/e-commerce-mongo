@@ -121,10 +121,10 @@ async function _storeRemovePhotos(productId, photoIds, {client, photo, product})
             const resDelete = await photo.deleteMany({
                 productId,
                 _id: {$in: photoIds.map(id => new ObjectId(id))}
-            })
+            }, {session})
 
             // API should respond with 400: bad input
-            if (resDelete.deletedCount < photoIds) throw ResourceNotFound.create("not all given photos belong to the given product")
+            if (resDelete.deletedCount < photoIds.length) throw ResourceNotFound.create("not all given photos belong to the given product")
 
             const _product = await product.findOne({_id: productId}, {session})
 
@@ -147,7 +147,7 @@ async function _storeRemovePhotos(productId, photoIds, {client, photo, product})
                         $set: {
                             expose: false
                         }
-                    })
+                    }, {session})
                 } catch (e) {
                     if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
                     throw e
@@ -497,4 +497,4 @@ async function _storeGetMany(expose, inStock, sortOrder, {c}) {
     return res
 }
 
-export {_storeCreate, _storeUpdate, _storeAddPhotos, _storeDelete, _storeGetById, _storeGetByIdRaw, _storeGetMany}
+export {_storeCreate, _storeUpdate, _storeAddPhotos, _storeRemovePhotos, _storeDelete, _storeGetById, _storeGetByIdRaw, _storeGetMany}
