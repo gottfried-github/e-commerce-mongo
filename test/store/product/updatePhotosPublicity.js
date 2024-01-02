@@ -74,7 +74,6 @@ export default function updatePhotosPublicity() {
                 assert.fail()
             })
 
-            /*
             it("doesn't change the other photos' publicity", async () => {
                 const client = new MongoClient(`mongodb://${process.env.APP_DB_USER}:${process.env.APP_DB_PASS}@${process.env.NET_NAME}/${process.env.APP_DB_NAME}`)
                 await client.connect()
@@ -121,7 +120,7 @@ export default function updatePhotosPublicity() {
                         public: true
                     })), {client, product, photo})
                 } catch (e) {
-                    
+                    // expected to throw
                 }
 
                 const photosDocs = await photo.find({
@@ -130,8 +129,8 @@ export default function updatePhotosPublicity() {
                     }
                 }).toArray()
 
-                for (const photo of photosDocs) {
-                    if (photo.public) {
+                for (const _photo of photosDocs) {
+                    if (_photo.public) {
                         await photo.deleteMany({})
                         await product.deleteMany({})
                         await client.close()
@@ -146,7 +145,6 @@ export default function updatePhotosPublicity() {
 
                 assert(true)
             })
-            */
         })
 
         describe("passed a public photo that's already public", () => {
