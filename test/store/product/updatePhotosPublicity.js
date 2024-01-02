@@ -205,8 +205,87 @@ export default function updatePhotosPublicity() {
         })
 
         describe("passed a public photo that's already public", () => {
-            it("doesn't change the photo's order", () => {
+            it("doesn't change the photo's order", async () => {
+                const client = new MongoClient(`mongodb://${process.env.APP_DB_USER}:${process.env.APP_DB_PASS}@${process.env.NET_NAME}/${process.env.APP_DB_NAME}`)
+                await client.connect()
 
+                const photo = client.db(process.env.APP_DB_NAME).collection('photo')
+                const product = client.db(process.env.APP_DB_NAME).collection('product')
+
+                const resProduct = await product.insertOne({expose: false})
+
+                const photos = [
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '0',
+                        pathLocal: '0',
+                        public: true,
+                        order: 0,
+                        cover: false,
+                    },
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '1',
+                        pathLocal: '1',
+                        public: true,
+                        order: 1,
+                        cover: false,
+                    },
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '2',
+                        pathLocal: '2',
+                        public: true,
+                        order: 2,
+                        cover: false,
+                    },
+                ]
+
+                const resPhotos = await photo.insertMany(photos)
+
+                const photosIds = Object.keys(resPhotos.insertedIds).reduce((ids, index) => {
+                    ids[parseInt(index)] = resPhotos.insertedIds[index]
+                    return ids
+                }, [])
+
+                const photosData = photosIds.map((photo, i) => {
+                    if (0 === i) {
+                        return {
+                            id: photo,
+                            public: true
+                        }
+                    }
+
+                    return {
+                        id: photo,
+                        public: false
+                    }
+                })
+
+                try {
+                    await _storeUpdatePhotosPublicity(resProduct.insertedId, photosData, {client, product, photo})
+                } catch (e) {
+                    await photo.deleteMany({})
+                    await product.deleteMany({})
+                    await client.close()
+
+                    console.log("+storeUpdatePhotosPublicity threw, error:", e)
+                    return assert.fail("threw an error")
+                }
+
+                const photoDoc = await photo.findOne({
+                    _id: photosIds[0]
+                })
+
+                if (photoDoc.order !== 0) {
+                    await photo.deleteMany({})
+                    await product.deleteMany({})
+                    await client.close()
+
+                    return assert.fail("the order of an already public photo changed")
+                }
+
+                assert(true)
             })
         })
 
