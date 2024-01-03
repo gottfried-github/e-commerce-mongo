@@ -200,8 +200,67 @@ export default function setCoverPhoto() {
                 assert(!photoDoc.cover)
             })
 
-            it("updates the given photo", () => {
+            it("updates the given photo", async () => {
+                const client = new MongoClient(`mongodb://${process.env.APP_DB_USER}:${process.env.APP_DB_PASS}@${process.env.NET_NAME}/${process.env.APP_DB_NAME}`)
+                await client.connect()
 
+                const photo = client.db(process.env.APP_DB_NAME).collection('photo')
+                const product = client.db(process.env.APP_DB_NAME).collection('product')
+
+                const resProduct = await product.insertOne({expose: false})
+
+                const photos = [
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '0',
+                        pathLocal: '0',
+                        public: false,
+                        cover: false,
+                    },
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '1',
+                        pathLocal: '1',
+                        public: false,
+                        cover: false,
+                    },
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '2',
+                        pathLocal: '2',
+                        public: false,
+                        cover: true,
+                    },
+                ]
+
+                const resPhotos = await photo.insertMany(photos)
+
+                const photosIds = Object.keys(resPhotos.insertedIds).reduce((ids, index) => {
+                    ids[parseInt(index)] = resPhotos.insertedIds[index]
+                    return ids
+                }, [])
+
+                try {
+                    await _storeSetCoverPhoto(resProduct.insertedId, {
+                        id: photosIds[1],
+                        cover: true
+                    }, {client, product, photoC: photo})
+                } catch (e) {
+                    await photo.deleteMany({})
+                    await product.deleteMany({})
+                    await client.close()
+
+                    console.log("_storeSetCoverPhoto threw, error:", e)
+                    return assert.fail("threw an error")
+                }
+
+                const photoDoc = await photo.findOne({_id: photosIds[1]})
+
+                await photo.deleteMany({})
+                await product.deleteMany({})
+                await client.close()
+
+                assert(photoDoc.cover)
             })
         })
 
