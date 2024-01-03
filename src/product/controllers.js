@@ -177,7 +177,25 @@ async function _updatePhotosPublicity(productId, photos, {updatePhotosPublicity,
 }
 
 async function _setCoverPhoto(productId, photo, {setCoverPhoto, validateObjectId}) {
+    const productIdE = validateObjectId(productId)
 
+    // spec: invalid id
+    if (productIdE) throw m.InvalidCriterion.create(productIdE.message, productIdE)
+
+    const photoIdE = validateObjectId(photo.id)
+    if (photoIdE) throw m.ValidationError.create("photo's id is incorrect", null, photoIdE)
+
+    let res = null
+
+    try {
+        res = await setCoverPhoto(productId, photo)
+    } catch (e) {
+        if (e instanceof ValidationError) throw m.ValidationError.create("database-level validation failed", null, e)
+
+        throw e
+    }
+
+    return res
 }
 
 async function _delete(id, {storeDelete, validateObjectId}) {
