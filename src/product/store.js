@@ -293,10 +293,17 @@ async function _storeUpdatePhotosPublicity(productId, photos, {client, photo, pr
                     }
                 }
 
-                const res = await photo.updateOne({
-                    productId: new ObjectId(productId),
-                    _id: new ObjectId(_photo.id)
-                }, update, {session})
+                let res = null
+
+                try {
+                    res = await photo.updateOne({
+                        productId: new ObjectId(productId),
+                        _id: new ObjectId(_photo.id)
+                    }, update, {session})
+                } catch (e) {
+                    if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
+                    throw e
+                }
 
                 if (!res.matchedCount) throw new Error("photo found during find but not matched during update")
             }
