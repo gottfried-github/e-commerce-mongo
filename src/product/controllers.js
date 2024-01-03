@@ -75,7 +75,7 @@ async function _addPhotos(id, photos, {addPhotos, validateObjectId}) {
 }
 
 async function _removePhotos(productId, photosIds, {removePhotos, validateObjectId}) {
-    const idE = validateObjectId(id)
+    const idE = validateObjectId(productId)
 
     // spec: invalid id
     if (idE) throw m.InvalidCriterion.create(idE.message, idE)
@@ -109,7 +109,37 @@ async function _removePhotos(productId, photosIds, {removePhotos, validateObject
 }
 
 async function _reorderPhotos(productId, photos, {reorderPhotos, validateObjectId}) {
+    const idE = validateObjectId(productId)
 
+    // spec: invalid id
+    if (idE) throw m.InvalidCriterion.create(idE.message, idE)
+
+    const photosIdsErrors = photos.reduce((errors, photo, i) => {
+        const e = validateObjectId(photo.id)
+
+        if (e) errors.push({
+            index: i,
+            error: e
+        })
+
+        return errors
+    }, [])
+
+    if (photosIdsErrors.length) throw m.ValidationError.create("some photosIds are incorrect", null, {
+        errors: photosIdsErrors
+    })
+
+    let res = null
+
+    try {
+        res = await reorderPhotos(productId, photos)
+    } catch (e) {
+        if (e instanceof ValidationError) throw m.ValidationError.create("database-level validation failed", null, e)
+
+        throw e
+    }
+
+    return res
 }
 
 async function _updatePhotosPublicity(productId, photos, {updatePhotosPublicity, validateObjectId}) {
