@@ -265,12 +265,146 @@ export default function setCoverPhoto() {
         })
 
         describe("given a photo of an exposed product with cover set to false", () => {
-            it("updates the given photo", () => {
+            it("updates the given photo", async () => {
+                const client = new MongoClient(`mongodb://${process.env.APP_DB_USER}:${process.env.APP_DB_PASS}@${process.env.NET_NAME}/${process.env.APP_DB_NAME}`)
+                await client.connect()
 
+                const photo = client.db(process.env.APP_DB_NAME).collection('photo')
+                const product = client.db(process.env.APP_DB_NAME).collection('product')
+
+                const resProduct = await product.insertOne({
+                    name: 'product',
+                    price: 10000,
+                    time: new Date(),
+                    is_in_stock: false,
+                    description: 'some description',
+                    expose: true
+                })
+
+                const photos = [
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '0',
+                        pathLocal: '0',
+                        public: false,
+                        cover: false,
+                    },
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '1',
+                        pathLocal: '1',
+                        public: false,
+                        cover: false,
+                    },
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '2',
+                        pathLocal: '2',
+                        public: false,
+                        cover: true,
+                    },
+                ]
+
+                const resPhotos = await photo.insertMany(photos)
+
+                const photosIds = Object.keys(resPhotos.insertedIds).reduce((ids, index) => {
+                    ids[parseInt(index)] = resPhotos.insertedIds[index]
+                    return ids
+                }, [])
+
+                try {
+                    await _storeSetCoverPhoto(resProduct.insertedId, {
+                        id: photosIds[2],
+                        cover: false
+                    }, {client, product, photoC: photo})
+                } catch (e) {
+                    await photo.deleteMany({})
+                    await product.deleteMany({})
+                    await client.close()
+
+                    console.log("_storeSetCoverPhoto threw, error:", e)
+                    return assert.fail("threw an error")
+                }
+
+                const photoDoc = await photo.findOne({_id: photosIds[2]})
+
+                await photo.deleteMany({})
+                await product.deleteMany({})
+                await client.close()
+
+                assert(!photoDoc.cover)
             })
 
-            it("sets the product's expose field to false", () => {
+            it("sets the product's expose field to false", async () => {
+                const client = new MongoClient(`mongodb://${process.env.APP_DB_USER}:${process.env.APP_DB_PASS}@${process.env.NET_NAME}/${process.env.APP_DB_NAME}`)
+                await client.connect()
 
+                const photo = client.db(process.env.APP_DB_NAME).collection('photo')
+                const product = client.db(process.env.APP_DB_NAME).collection('product')
+
+                const resProduct = await product.insertOne({
+                    name: 'product',
+                    price: 10000,
+                    time: new Date(),
+                    is_in_stock: false,
+                    description: 'some description',
+                    expose: true
+                })
+
+                const photos = [
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '0',
+                        pathLocal: '0',
+                        public: true,
+                        order: 0,
+                        cover: false,
+                    },
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '1',
+                        pathLocal: '1',
+                        public: true,
+                        order: 1,
+                        cover: false,
+                    },
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '2',
+                        pathLocal: '2',
+                        public: false,
+                        cover: true,
+                    },
+                ]
+
+                const resPhotos = await photo.insertMany(photos)
+
+                const photosIds = Object.keys(resPhotos.insertedIds).reduce((ids, index) => {
+                    ids[parseInt(index)] = resPhotos.insertedIds[index]
+                    return ids
+                }, [])
+
+                try {
+                    await _storeSetCoverPhoto(resProduct.insertedId, {
+                        id: photosIds[2],
+                        cover: false
+                    }, {client, product, photoC: photo})
+                } catch (e) {
+                    await photo.deleteMany({})
+                    await product.deleteMany({})
+                    await client.close()
+
+                    console.log("_storeSetCoverPhoto threw, error:", e)
+                    return assert.fail("threw an error")
+                }
+
+                const productDoc = await product.findOne({_id: resProduct.insertedId})
+
+                await photo.deleteMany({})
+                await product.deleteMany({})
+                await client.close()
+
+                assert(!productDoc.expose)
             })
         })
     })
