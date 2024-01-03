@@ -271,7 +271,7 @@ async function _storeUpdatePhotosPublicity(productId, photos, {client, photo, pr
                     }, {session})
 
                     if (!_photoDoc) throw ResourceNotFound.create("a photo with given id, referencing the given product doesn't exist")
-                    
+
                     update.$set.public = false
                     update.$unset = {
                         order: ''
@@ -335,12 +335,16 @@ async function _storeSetCoverPhoto(productId, photo, {client, product, photoC}) 
     let res = null
 
     try {
-        session.withTransaction(async () => {
+        res = await session.withTransaction(async () => {
+            const productDoc = await product.findOne({_id: productId}, {session})
+
+            if (!productDoc) throw ResourceNotFound.create("given product doesn't exist")
+
             if (photo.cover === true) {
                 const photoCoverPrev = await photoC.findOne({
                     productId: new ObjectId(productId),
                     cover: true
-                })
+                }, {session})
 
                 if (photoCoverPrev) {
                     try {
@@ -350,7 +354,7 @@ async function _storeSetCoverPhoto(productId, photo, {client, product, photoC}) 
                             $set: {
                                 cover: false
                             }
-                        })
+                        }, {session})
                     } catch (e) {
                         if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
                         throw e
@@ -362,12 +366,12 @@ async function _storeSetCoverPhoto(productId, photo, {client, product, photoC}) 
                 try {
                     res = await photoC.updateOne({
                         productId: new ObjectId(productId),
-                        _id: photo.id
+                        _id: new ObjectId(photo.id)
                     }, {
                         $set: {
                             cover: true
                         }
-                    })
+                    }, {session})
                 } catch (e) {
                     if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
                     throw e
@@ -387,7 +391,7 @@ async function _storeSetCoverPhoto(productId, photo, {client, product, photoC}) 
                         $set: {
                             cover: false
                         }
-                    })
+                    }, {session})
                 } catch (e) {
                     if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
                     throw e
@@ -395,13 +399,7 @@ async function _storeSetCoverPhoto(productId, photo, {client, product, photoC}) 
 
                 if (!res.matchedCount) throw ResourceNotFound.create("given photo doesn't belong to the given product")
 
-                const product = await product.findOne({
-                    _id: new ObjectId(productId)
-                })
-
-                if (!product) throw ResourceNotFound.create("given product doesn't exist")
-
-                if (!product.expose) return true
+                if (!productDoc.expose) return true
 
                 let resProduct = null
 
@@ -412,7 +410,7 @@ async function _storeSetCoverPhoto(productId, photo, {client, product, photoC}) 
                         $set: {
                             expose: false
                         }
-                    })
+                    }, {session})
                 } catch (e) {
                     if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
                     throw e
@@ -513,6 +511,7 @@ export {
     _storeAddPhotos, 
     _storeRemovePhotos, 
     _storeUpdatePhotosPublicity,
+    _storeSetCoverPhoto,
     _storeDelete, 
     _storeGetById, 
     _storeGetByIdRaw, 
