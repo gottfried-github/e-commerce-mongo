@@ -74,6 +74,22 @@ async function _addPhotos(id, photos, {addPhotos, validateObjectId}) {
     return res
 }
 
+async function _removePhotos(productId, photosIds, {removePhotos, validateObjectId}) {
+
+}
+
+async function _reorderPhotos(productId, photos, {reorderPhotos, validateObjectId}) {
+
+}
+
+async function _updatePhotosPublicity(productId, photos, {updatePhotosPublicity, validateObjectId}) {
+
+}
+
+async function _setCoverPhoto(productId, photo, {setCoverPhoto, validateObjectId}) {
+
+}
+
 async function _delete(id, {storeDelete, validateObjectId}) {
     const idE = validateObjectId(id)
 
@@ -106,4 +122,15 @@ async function _getMany(expose, inStock, sortOrder, {getMany}) {
     return getMany(expose, inStock, sortOrder)
 }
 
-export {_create, _update, _addPhotos, _delete, _getById, _getMany}
+export {
+    _create,
+     _update, 
+    _addPhotos, 
+    _removePhotos,
+    _reorderPhotos,
+    _updatePhotosPublicity,
+    _setCoverPhoto,
+    _delete, 
+    _getById, 
+    _getMany
+}
