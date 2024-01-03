@@ -7,9 +7,10 @@ import {ValidationError, validateObjectId} from '../helpers.js'
 const VALIDATION_FAIL_MSG = "data validation failed"
 
 async function _storeCreate(fields, {c}) {
-    let res = null
-
+    if (fields.expose) throw new ValidationError("can't expose the product: no public photos and no cover photo")
     if (fields.time) fields.time = new Date(fields.time)
+    
+    let res = null
     
     try {
         res = await c.insertOne(fields)
@@ -32,29 +33,45 @@ function _wrapPhoto(photo) {
 /**
     @param {id, in Types} id
 */
-async function _storeUpdate(id, {write, remove}, {c}) {
+async function _storeUpdate(id, {write, remove}, {product, photo}) {
+    const productDoc = await product.findOne({_id: new ObjectId(id)})
+
+    if (!productDoc) throw ResourceNotFound.create("given product doesn't exist")
+
+    if (write?.expose === true) {
+        const photosPublic = await photo.find({
+            productId: new ObjectId(id),
+            public: true
+        }).toArray()
+
+        const photoCover = await photo.findOne({
+            productId: new ObjectId(id),
+            cover: true
+        })
+
+        if (!photosPublic.length || !photoCover) throw new ValidationError("can't set expose to true: product has no public photos and/or cover photo")
+    }
+
+    if (write?.time) write.time = new Date(write.time)
+
+    const query = {}
+    if (write) query.$set = write
+
+    if (remove) {
+        query.$unset = {}
+        remove.forEach(fieldName => query.$unset[fieldName] = '')
+    }
+
     let res = null
+    
     try {
-        if (write?.photos) write.photos = write.photos.map(_wrapPhoto)
-        if (write?.photos_all) write.photos_all = write.photos_all.map(_wrapPhoto)
-        if (write?.cover_photo) write.cover_photo = _wrapPhoto(write.cover_photo)
-        if (write?.time) write.time = new Date(write.time)
-
-        const query = {}
-        if (write) query.$set = write
-
-        if (remove) {
-            query.$unset = {}
-            remove.forEach(fieldName => query.$unset[fieldName] = '')
-        }
-
-        res = await c.updateOne({_id: new ObjectId(id)}, query, {upsert: false})
+        res = await product.updateOne({_id: new ObjectId(id)}, query, {upsert: false})
     } catch(e) {
         if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
         throw e
     }
 
-    if (!res.matchedCount) return null
+    if (!res.matchedCount) throw new Error("given product found during find but not matched during update")
     if (!res.modifiedCount) return false
     // if (!res.matchedCount) throw m.ResourceNotFound.create("the given id didn't match any products")
 
@@ -63,45 +80,89 @@ async function _storeUpdate(id, {write, remove}, {c}) {
 
 /**
  * @param {ObjectId} id
- * @param {Array} photos array of ObjectId's
+ * @param {Array} photos photo: {
+ *      pathPublic, pathLocal
+ * }
 */
-async function _storeAddPhotos(id, photos, {client, photo, product}) {
+async function _storeAddPhotos(productId, photos, {product, photo}) {
+    const productDoc = await product.findOne({_id: new ObjectId(productId)})
+
+    if (!productDoc) throw ResourceNotFound.create("given product doesn't exist")
+
+    const _photos = photos.map(photo => ({
+        ...photo,
+        productId: new ObjectId(productId),
+        public: false,
+        cover: false,
+    }))
+
+    let res = null
+
+    try {
+        res = await photo.insertMany(_photos)
+    } catch(e) {
+        // 121 is validation error: erroneous response example in https://www.mongodb.com/docs/manual/core/schema-validation/#existing-documents
+        if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
+
+        throw e
+    }
+
+    if (res.insertedCount !== _photos.length) throw new Error("insertedCount is not the same as the number of given photos")
+
+    return true
+}
+
+async function _storeRemovePhotos(productId, photoIds, {client, photo, product}) {
     const session = client.startSession()
 
     let res = null
 
     try {
         res = await session.withTransaction(async () => {
-            let photosRes = null
-    
-            try {
-                photosRes = await photo.insertMany(photos, {session})
-            } catch(e) {
-                if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, {
-                    index: e.writeErrors[0].err.index,
-                    err: e
-                })
-        
-                throw e
+            const resDelete = await photo.deleteMany({
+                productId,
+                _id: {$in: photoIds.map(id => new ObjectId(id))}
+            }, {session})
+
+            // API should respond with 400: bad input
+            if (resDelete.deletedCount < photoIds.length) throw ResourceNotFound.create("not all given photos belong to the given product")
+
+            const _product = await product.findOne({_id: productId}, {session})
+
+            if (!_product) throw ResourceNotFound.create("given product doesn't exist")
+
+            if (!_product.expose) return true
+
+            const photosPublic = await photo.find({
+                productId,
+                public: true
+            }, {session}).toArray()
+
+            const photoCover = await photo.findOne({productId, cover: true}, {session})
+
+            if (!photosPublic.length || !photoCover) {
+                let resProduct = null
+
+                try {
+                    resProduct = await product.updateOne({_id: productId}, {
+                        $set: {
+                            expose: false
+                        }
+                    }, {session})
+                } catch (e) {
+                    if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
+                    throw e
+                }
+
+                if (!resProduct.matchedCount) throw new Error("updateOne doesn't match existing product")
+                if (resProduct.modifiedCount === 0) throw new Error("product's expose field doesn't get updated")
+
+                return true
             }
-        
-            const photosIds = Object.keys(photosRes.insertedIds).map(k => photosRes.insertedIds[k])
-    
-            let productRes = null
-            
-            try {
-                productRes = await product.updateOne({_id: new ObjectId(id)}, {$push: {photos_all: {$each: photosIds}}}, {session})
-            } catch (e) {
-                if (121 === e.code) e = new ValidationError(VALIDATION_FAIL_MSG, e)
-                throw e
-            }
-        
-            if (!productRes.matchedCount) throw ResourceNotFound.create("product with given id doesn't exist") // this should be a 404 error
-            if (!productRes.modifiedCount) throw new Error("photos written into Photo but not written into product.photos_all") // it's impossible that the photosIds already existed in the product
-            
+
             return true
         })
-    } catch(e) {
+    } catch (e) {
         await session.endSession()
 
         throw e
@@ -118,6 +179,289 @@ async function _storeAddPhotos(id, photos, {client, photo, product}) {
     }
 
     await session.endSession()
+
+    return true
+}
+
+async function _storeReorderPhotos(productId, photos, {client, product, photo}) {
+    const productDoc = await product.findOne({_id: new ObjectId(productId)})
+
+    if (!productDoc) throw ResourceNotFound.create("given product doesn't exist")
+
+    const photosDocs = await photo.find({
+        productId: new ObjectId(productId),
+        public: true,
+    }).toArray()
+
+    if (photosDocs.length !== photos.length) throw new ValidationError("must pass all photos, relating to the given product and only the photos that relate to the given product")
+
+    const session = client.startSession()
+
+    let res = null
+
+    try {
+        res = await session.withTransaction(async () => {
+            for (const _photo of photos) {
+                let res = null
+
+                try {
+                    res = await photo.updateOne({
+                        productId: new ObjectId(productId),
+                        public: true,
+                        _id: new ObjectId(_photo.id),
+                    }, {
+                        $set: {
+                            order: _photo.order
+                        }
+                    }, {session})
+                } catch (e) {
+                    if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
+                    throw e
+                }
+
+                if (!res.matchedCount) throw ResourceNotFound.create("given photo doesn't belong to the given product or isn't public")
+            }
+
+            return true
+        })
+    } catch (e) {
+        await session.endSession()
+
+        throw e
+    }
+
+    // for some reason, withTransaction returns an object with the `ok` property instead of the return value of the callback
+    if (res.ok !== 1) {
+        await session.endSession()
+        
+        const e = new Error('transaction completed but return value is not ok')
+        e.data = res
+
+        throw e
+    }
+
+    await session.endSession()
+
+    return true
+}
+
+async function _storeUpdatePhotosPublicity(productId, photos, {client, photo, product}) {
+    const session = client.startSession()
+    
+    let res = null
+
+    try {
+        res = await session.withTransaction(async () => {
+            for (const _photo of photos) {
+                const update = {$set: {}}
+
+                if (_photo.public === true) {
+                    const _photoDoc = await photo.findOne({
+                        productId: new ObjectId(productId),
+                        _id: new ObjectId(_photo.id)
+                    }, {session})
+
+                    if (!_photoDoc) throw ResourceNotFound.create("a photo with given id, referencing the given product doesn't exist")
+
+                    // prevent changing order of an already public photo
+                    if (_photoDoc.public) continue
+
+                    update.$set.public = _photo.public
+
+                    const photosDocs = await photo.find({
+                        productId: new ObjectId(productId),
+                        public: true
+                    }, {session})
+                        .sort('order', 1)
+                        .toArray()
+
+                    update.$set.order = photosDocs.length > 0
+                        ? photosDocs[photosDocs.length - 1].order + 1
+                        : 0
+
+                } else if (_photo.public === false) {
+                    const _photoDoc = await photo.findOne({
+                        productId: new ObjectId(productId),
+                        _id: new ObjectId(_photo.id)
+                    }, {session})
+
+                    if (!_photoDoc) throw ResourceNotFound.create("a photo with given id, referencing the given product doesn't exist")
+
+                    update.$set.public = false
+                    update.$unset = {
+                        order: ''
+                    }
+                }
+
+                let res = null
+
+                try {
+                    res = await photo.updateOne({
+                        productId: new ObjectId(productId),
+                        _id: new ObjectId(_photo.id)
+                    }, update, {session})
+                } catch (e) {
+                    if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
+                    throw e
+                }
+
+                if (!res.matchedCount) throw new Error("photo found during find but not matched during update")
+            }
+
+            const photosDocs = await photo.find({
+                productId: new ObjectId(productId),
+                public: true
+            }, {session}).toArray()
+
+            if (!photosDocs.length) {
+                try {
+                    await product.updateOne({
+                        _id: new ObjectId(productId)
+                    }, {
+                        $set: {
+                            expose: false
+                        }
+                    }, {session})
+                } catch (e) {
+                    if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
+                    throw e
+                }
+            }
+
+            return true
+        })
+    } catch (e) {
+        await session.endSession()
+
+        throw e
+    }
+
+    // for some reason, withTransaction returns an object with the `ok` property instead of the return value of the callback
+    if (res.ok !== 1) {
+        await session.endSession()
+        
+        const e = new Error('transaction completed but return value is not ok')
+        e.data = res
+
+        throw e
+    }
+
+    await session.endSession()
+
+    return true
+}
+
+async function _storeSetCoverPhoto(productId, photo, {client, product, photoC}) {
+    const session = client.startSession()
+    
+    let res = null
+
+    try {
+        res = await session.withTransaction(async () => {
+            const productDoc = await product.findOne({_id: productId}, {session})
+
+            if (!productDoc) throw ResourceNotFound.create("given product doesn't exist")
+
+            if (photo.cover === true) {
+                const photoCoverPrev = await photoC.findOne({
+                    productId: new ObjectId(productId),
+                    cover: true
+                }, {session})
+
+                if (photoCoverPrev) {
+                    try {
+                        await photoC.updateOne({
+                            _id: photoCoverPrev._id
+                        }, {
+                            $set: {
+                                cover: false
+                            }
+                        }, {session})
+                    } catch (e) {
+                        if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
+                        throw e
+                    }
+                }
+
+                let res = null
+
+                try {
+                    res = await photoC.updateOne({
+                        productId: new ObjectId(productId),
+                        _id: new ObjectId(photo.id)
+                    }, {
+                        $set: {
+                            cover: true
+                        }
+                    }, {session})
+                } catch (e) {
+                    if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
+                    throw e
+                }
+
+                if (!res.matchedCount) throw ResourceNotFound.create("the given photo doesn't belong to the given product")
+
+                return true
+            } else if (photo.cover === false) {
+                let res = null
+
+                try {
+                    res = await photoC.updateOne({
+                        productId: new ObjectId(productId),
+                        _id: new ObjectId(photo.id)
+                    }, {
+                        $set: {
+                            cover: false
+                        }
+                    }, {session})
+                } catch (e) {
+                    if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
+                    throw e
+                }
+
+                if (!res.matchedCount) throw ResourceNotFound.create("given photo doesn't belong to the given product")
+
+                if (!productDoc.expose) return true
+
+                let resProduct = null
+
+                try {
+                    resProduct = await product.updateOne({
+                        _id: new ObjectId(productId)
+                    }, {
+                        $set: {
+                            expose: false
+                        }
+                    }, {session})
+                } catch (e) {
+                    if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
+                    throw e
+                }
+
+                if (!resProduct.matchedCount) throw new Error("product found during find but not matched during update")
+                return true
+            } else {
+                throw new Error("photo cover must be boolean")
+            }
+        })
+    } catch (e) {
+        await session.endSession()
+
+        throw e
+    }
+
+    // for some reason, withTransaction returns an object with the `ok` property instead of the return value of the callback
+    if (res.ok !== 1) {
+        await session.endSession()
+        
+        const e = new Error('transaction completed but return value is not ok')
+        e.data = res
+
+        throw e
+    }
+
+    await session.endSession()
+
     return true
 }
 
@@ -130,123 +474,11 @@ async function _storeDelete(id, {c}) {
 async function _storeGetById(id, {c}) {
     const res = await c.aggregate([
         {$match: {_id: new ObjectId(id)}},
-        {$lookup: {
-            from: 'photo',
-            let: {
-                'photo_id': '$photos_all'
-            },
-            pipeline: [
-                {$match: {
-                    $expr: {
-                        // only search docs if the local field exists
-                        $cond: {
-                            if: { $eq: [{ $type: "$$photo_id" }, "missing"] },
-                            then: {$literal: null},
-                            else: {$in: ['$_id', '$$photo_id']}
-                        }
-                    }
-                }},
-                // add a field to each matching document with index of the document in the photos_all array
-                {$addFields: {
-                    sort: {
-                        $indexOfArray: ['$$photo_id', '$_id']
-                    }
-                }},
-                // sort the matching documents by the added index
-                {$sort: {'sort': 1}},
-                // remove the field with the index
-                {$addFields: {'sort': '$$REMOVE'}}
-            ],
-            as: 'photos_all'
-        }},
-        {$lookup: {
-            from: 'photo',
-            let: {
-                'photo_id': '$photos'
-            },
-            pipeline: [
-                {$match: {
-                    $expr: {
-                        $cond: {
-                            if: { $eq: [{ $type: "$$photo_id" }, "missing"] },
-                            then: {$literal: null},
-                            else: {$in: ['$_id', '$$photo_id']}
-                        }
-                    }
-                }},
-                {$addFields: {
-                    sort: {
-                        $indexOfArray: ['$$photo_id', '$_id']
-                    }
-                }},
-                {$sort: {'sort': 1}},
-                {$addFields: {'sort': '$$REMOVE'}}
-            ],
-            as: 'photos'
-        }},
-        {$lookup: {
-            from: 'photo',
-            let: {
-                'cover_photo_id': '$cover_photo'
-            },
-            pipeline: [
-                {$match: {
-                    $expr: {
-                        $cond: {
-                            if: { $eq: [{ $type: "$$cover_photo_id" }, "missing"] },
-                            then: {$literal: null},
-                            else: {$eq: ['$_id', '$$cover_photo_id']}
-                        }
-                    }
-                }}
-            ],
-            as: 'cover_photo_lookup'
-        }},
         {$project: {
-            'photos_all': {$cond: {
-                if: {$gt: [{$size: '$photos_all'}, 0]},
-                then: {$map: {
-                    input: '$photos_all',
-                    as: 'photo',
-                    in: {
-                        id: '$$photo._id',
-                        pathPublic: '$$photo.pathPublic',
-                        pathLocal: '$$photo.pathLocal'
-                    }
-                }},
-                else: null
-            }},
-            'photos': {$cond: {
-                if: {$gt: [{$size: '$photos'}, 0]},
-                then: {$map: {
-                    input: '$photos',
-                    as: 'photo',
-                    in: {
-                        id: '$$photo._id',
-                        pathPublic: '$$photo.pathPublic',
-                        pathLocal: '$$photo.pathLocal'
-                    }
-                }},
-                else: null
-            }},
             name: 1,
             price: 1,
             is_in_stock: 1,
             expose: 1,
-            cover_photo: {$cond: {
-                if: {$gt: [{$size: '$cover_photo_lookup'}, 0]},
-                then: {
-                    id: {$getField: {
-                        field: {$literal: '_id'},
-                        input: {$arrayElemAt: ['$cover_photo_lookup', 0]}
-                    }},
-                    path: {$getField: {
-                        field: {$literal: 'path'},
-                        input: {$arrayElemAt: ['$cover_photo_lookup', 0]}
-                    }},
-                },
-                else: null
-            }},
             description: 1,
             time: 1
         }}
@@ -279,123 +511,11 @@ async function _storeGetMany(expose, inStock, sortOrder, {c}) {
     }
 
     pipeline.push(
-        {$lookup: {
-            from: 'photo',
-            let: {
-                'photo_id': '$photos_all'
-            },
-            pipeline: [
-                {$match: {
-                    $expr: {
-                        // only search docs if the local field exists
-                        $cond: {
-                            if: { $eq: [{ $type: "$$photo_id" }, "missing"] },
-                            then: {$literal: null},
-                            else: {$in: ['$_id', '$$photo_id']}
-                        }
-                    }
-                }},
-                // add a field to each matching document with index of the document in the photos_all array
-                {$addFields: {
-                    sort: {
-                        $indexOfArray: ['$$photo_id', '$_id']
-                    }
-                }},
-                // sort the matching documents by the added index
-                {$sort: {'sort': 1}},
-                // remove the field with the index
-                {$addFields: {'sort': '$$REMOVE'}}
-            ],
-            as: 'photos_all'
-        }},
-        {$lookup: {
-            from: 'photo',
-            let: {
-                'photo_id': '$photos'
-            },
-            pipeline: [
-                {$match: {
-                    $expr: {
-                        $cond: {
-                            if: { $eq: [{ $type: "$$photo_id" }, "missing"] },
-                            then: {$literal: null},
-                            else: {$in: ['$_id', '$$photo_id']}
-                        }
-                    }
-                }},
-                {$addFields: {
-                    sort: {
-                        $indexOfArray: ['$$photo_id', '$_id']
-                    }
-                }},
-                {$sort: {'sort': 1}},
-                {$addFields: {'sort': '$$REMOVE'}}
-            ],
-            as: 'photos'
-        }},
-        {$lookup: {
-            from: 'photo',
-            let: {
-                'cover_photo_id': '$cover_photo'
-            },
-            pipeline: [
-                {$match: {
-                    $expr: {
-                        $cond: {
-                            if: { $eq: [{ $type: "$$cover_photo_id" }, "missing"] },
-                            then: {$literal: null},
-                            else: {$eq: ['$_id', '$$cover_photo_id']}
-                        }
-                    }
-                }}
-            ],
-            as: 'cover_photo_lookup'
-        }},
         {$project: {
             id: '$_id',
-            'photos_all': {$cond: {
-                if: {$gt: [{$size: '$photos_all'}, 0]},
-                then: {$map: {
-                    input: '$photos_all',
-                    as: 'photo',
-                    in: {
-                        id: '$$photo._id',
-                        pathPublic: '$$photo.pathPublic',
-                        pathLocal: '$$photo.pathLocal'
-                    }
-                }},
-                else: null
-            }},
-            'photos': {$cond: {
-                if: {$gt: [{$size: '$photos'}, 0]},
-                then: {$map: {
-                    input: '$photos',
-                    as: 'photo',
-                    in: {
-                        id: '$$photo._id',
-                        pathPublic: '$$photo.pathPublic',
-                        pathLocal: '$$photo.pathLocal'
-                    }
-                }},
-                else: null
-            }},
             name: 1,
             price: 1,
             is_in_stock: 1,
-            cover_photo: {$cond: {
-                if: {$gt: [{$size: '$cover_photo_lookup'}, 0]},
-                then: {
-                    id: {$getField: {
-                        field: {$literal: '_id'},
-                        input: {$arrayElemAt: ['$cover_photo_lookup', 0]}
-                    }},
-                    path: {$getField: {
-                        field: {$literal: 'path'},
-                        input: {$arrayElemAt: ['$cover_photo_lookup', 0]}
-                    }},
-                },
-                else: null
-            }},
             expose: 1,
             description: 1,
             time: 1
@@ -407,4 +527,16 @@ async function _storeGetMany(expose, inStock, sortOrder, {c}) {
     return res
 }
 
-export {_storeCreate, _storeUpdate, _storeAddPhotos, _storeDelete, _storeGetById, _storeGetByIdRaw, _storeGetMany}
+export {
+    _storeCreate, 
+    _storeUpdate, 
+    _storeAddPhotos, 
+    _storeRemovePhotos, 
+    _storeUpdatePhotosPublicity,
+    _storeSetCoverPhoto,
+    _storeReorderPhotos,
+    _storeDelete, 
+    _storeGetById, 
+    _storeGetByIdRaw, 
+    _storeGetMany
+}

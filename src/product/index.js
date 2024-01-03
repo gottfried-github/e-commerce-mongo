@@ -1,11 +1,30 @@
 import {validateObjectId, containsId} from '../helpers.js'
 
 import {
-  _storeCreate, _storeUpdate, _storeAddPhotos, _storeDelete, _storeGetById, _storeGetByIdRaw, _storeGetMany
+    _storeCreate, 
+    _storeUpdate, 
+    _storeAddPhotos,
+    _storeRemovePhotos,
+    _storeReorderPhotos,
+    _storeUpdatePhotosPublicity,
+    _storeSetCoverPhoto, 
+    _storeDelete, 
+    _storeGetById, 
+    _storeGetByIdRaw, 
+    _storeGetMany
 } from './store.js'
 
 import {
-    _create, _update, _addPhotos, _delete, _getById, _getMany
+    _create, 
+    _update, 
+    _addPhotos, 
+    _removePhotos,
+    _reorderPhotos,
+    _updatePhotosPublicity,
+    _setCoverPhoto,
+    _delete, 
+    _getById, 
+    _getMany
 } from './controllers.js'
 
 function Product({client, product, photos}) {
@@ -19,6 +38,22 @@ function Product({client, product, photos}) {
 
     function storeAddPhotos(id, _photos) {
         return _storeAddPhotos(id, _photos, {client, photo: photos, product})
+    }
+
+    function storeRemovePhotos(productId, photosIds) {
+        return _storeRemovePhotos(productId, photosIds, {client, product, photo: photos})
+    }
+
+    function storeReorderPhotos(productId, _photos) {
+        return _storeReorderPhotos(productId, _photos, {client, product, photo: photos})
+    }
+
+    function storeUpdatePhotosPublicity(productId, _photos) {
+        return _storeUpdatePhotosPublicity(productId, _photos, {client, product, photo: photos})
+    }
+
+    function storeSetCoverPhoto(productId, photo) {
+        return _storeSetCoverPhoto(productId, photo, {client, product, photoC: photo})
     }
 
     function storeDelete(id) {
@@ -56,6 +91,34 @@ function Product({client, product, photos}) {
 
         addPhotos: (id, photos) => {
             return _addPhotos(id, photos, {addPhotos: storeAddPhotos, validateObjectId})
+        },
+
+        removePhotos: (productId, photosIds) => {
+            return _removePhotos(productId, photosIds, {
+                removePhotos: storeRemovePhotos,
+                validateObjectId
+            })
+        },
+
+        reorderPhotos: (productId, photos) => {
+            return _reorderPhotos(productId, photos, {
+                reorderPhotos: storeReorderPhotos,
+                validateObjectId
+            })
+        },
+
+        updatePhotosPublicity: (productId, photos) => {
+            return _updatePhotosPublicity(productId, photos, {
+                reorderPhotos: storeReorderPhotos,
+                validateObjectId
+            })
+        },
+
+        setCoverPhoto: (productId, photo) => {
+            return _setCoverPhoto(productId, photo, {
+                setCoverPhoto: storeSetCoverPhoto,
+                validateObjectId
+            })
         },
 
         delete: async (id) => {

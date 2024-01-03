@@ -74,6 +74,130 @@ async function _addPhotos(id, photos, {addPhotos, validateObjectId}) {
     return res
 }
 
+async function _removePhotos(productId, photosIds, {removePhotos, validateObjectId}) {
+    const idE = validateObjectId(productId)
+
+    // spec: invalid id
+    if (idE) throw m.InvalidCriterion.create(idE.message, idE)
+
+    const photosIdsErrors = photosIds.reduce((errors, photoId, i) => {
+        const e = validateObjectId(photoId)
+
+        if (e) errors.push({
+            index: i,
+            error: e
+        })
+
+        return errors
+    }, [])
+
+    if (photosIdsErrors.length) throw m.ValidationError.create("some photosIds are incorrect", null, {
+        errors: photosIdsErrors
+    })
+
+    let res = null
+
+    try {
+        res = await removePhotos(productId, photosIds)
+    } catch (e) {
+        if (e instanceof ValidationError) throw m.ValidationError.create("mongoDB built-in validation failed", null, e)
+
+        throw e
+    }
+
+    return res
+}
+
+async function _reorderPhotos(productId, photos, {reorderPhotos, validateObjectId}) {
+    const idE = validateObjectId(productId)
+
+    // spec: invalid id
+    if (idE) throw m.InvalidCriterion.create(idE.message, idE)
+
+    const photosIdsErrors = photos.reduce((errors, photo, i) => {
+        const e = validateObjectId(photo.id)
+
+        if (e) errors.push({
+            index: i,
+            error: e
+        })
+
+        return errors
+    }, [])
+
+    if (photosIdsErrors.length) throw m.ValidationError.create("some photosIds are incorrect", null, {
+        errors: photosIdsErrors
+    })
+
+    let res = null
+
+    try {
+        res = await reorderPhotos(productId, photos)
+    } catch (e) {
+        if (e instanceof ValidationError) throw m.ValidationError.create("database-level validation failed", null, e)
+
+        throw e
+    }
+
+    return res
+}
+
+async function _updatePhotosPublicity(productId, photos, {updatePhotosPublicity, validateObjectId}) {
+    const idE = validateObjectId(productId)
+
+    // spec: invalid id
+    if (idE) throw m.InvalidCriterion.create(idE.message, idE)
+
+    const photosIdsErrors = photos.reduce((errors, photo, i) => {
+        const e = validateObjectId(photo.id)
+
+        if (e) errors.push({
+            index: i,
+            error: e
+        })
+
+        return errors
+    }, [])
+
+    if (photosIdsErrors.length) throw m.ValidationError.create("some photosIds are incorrect", null, {
+        errors: photosIdsErrors
+    })
+
+    let res = null
+
+    try {
+        res = await updatePhotosPublicity(productId, photos)
+    } catch (e) {
+        if (e instanceof ValidationError) throw m.ValidationError.create("database-level validation failed", null, e)
+
+        throw e
+    }
+
+    return res
+}
+
+async function _setCoverPhoto(productId, photo, {setCoverPhoto, validateObjectId}) {
+    const productIdE = validateObjectId(productId)
+
+    // spec: invalid id
+    if (productIdE) throw m.InvalidCriterion.create(productIdE.message, productIdE)
+
+    const photoIdE = validateObjectId(photo.id)
+    if (photoIdE) throw m.ValidationError.create("photo's id is incorrect", null, photoIdE)
+
+    let res = null
+
+    try {
+        res = await setCoverPhoto(productId, photo)
+    } catch (e) {
+        if (e instanceof ValidationError) throw m.ValidationError.create("database-level validation failed", null, e)
+
+        throw e
+    }
+
+    return res
+}
+
 async function _delete(id, {storeDelete, validateObjectId}) {
     const idE = validateObjectId(id)
 
@@ -106,4 +230,15 @@ async function _getMany(expose, inStock, sortOrder, {getMany}) {
     return getMany(expose, inStock, sortOrder)
 }
 
-export {_create, _update, _addPhotos, _delete, _getById, _getMany}
+export {
+    _create,
+     _update, 
+    _addPhotos, 
+    _removePhotos,
+    _reorderPhotos,
+    _updatePhotosPublicity,
+    _setCoverPhoto,
+    _delete, 
+    _getById, 
+    _getMany
+}
