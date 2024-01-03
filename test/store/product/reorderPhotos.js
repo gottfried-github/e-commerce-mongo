@@ -235,8 +235,75 @@ export default function reorderPhotos() {
         })
 
         describe("passed a photo that is not public in the database", () => {
-            it("throws ResourceNotFound", () => {
+            it("throws ResourceNotFound", async () => {
+                const client = new MongoClient(`mongodb://${process.env.APP_DB_USER}:${process.env.APP_DB_PASS}@${process.env.NET_NAME}/${process.env.APP_DB_NAME}`)
+                await client.connect()
 
+                const photo = client.db(process.env.APP_DB_NAME).collection('photo')
+                const product = client.db(process.env.APP_DB_NAME).collection('product')
+
+                const resProduct = await product.insertOne({expose: false})
+
+                const photos = [
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '0',
+                        pathLocal: '0',
+                        public: true,
+                        order: 0,
+                        cover: false,
+                    },
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '1',
+                        pathLocal: '1',
+                        public: true,
+                        order: 1,
+                        cover: false,
+                    },
+                    {
+                        productId: resProduct.insertedId,
+                        pathPublic: '2',
+                        pathLocal: '2',
+                        public: false,
+                        cover: true,
+                    },
+                ]
+
+                const resPhotos = await photo.insertMany(photos)
+
+                const photosIds = Object.keys(resPhotos.insertedIds).reduce((ids, index) => {
+                    ids[parseInt(index)] = resPhotos.insertedIds[index]
+                    return ids
+                }, [])
+
+                const photosData = [
+                    {
+                        id: photosIds[0],
+                        order: 2,
+                    },
+                    {
+                        id: photosIds[2],
+                        order: 0,
+                    },
+                ]
+
+                try {
+                    await _storeReorderPhotos(resProduct.insertedId, photosData, {client, product, photo})
+                } catch (e) {
+                    await photo.deleteMany({})
+                    await product.deleteMany({})
+                    await client.close()
+
+                    console.log("_storeUpdatePhotosPublicity threw, error:", e)
+                    return assert(ResourceNotFound.code === e.code)
+                }
+
+                await photo.deleteMany({})
+                await product.deleteMany({})
+                await client.close()
+
+                assert.fail("didn't throw")
             })
         })
 
