@@ -190,8 +190,10 @@ async function _storeReorderPhotos(productId, photos, {client, photo}) {
 
     const session = client.startSession()
 
+    let res = null
+
     try {
-        session.withTransaction(async () => {
+        res = await session.withTransaction(async () => {
             for (const _photo of photos) {
                 try {
                     await photo.updateOne({_id: _photo.id}, {
@@ -234,7 +236,7 @@ async function _storeUpdatePhotosPublicity(productId, photos, {client, photo, pr
     let res = null
 
     try {
-        session.withTransaction(async () => {
+        res = await session.withTransaction(async () => {
             for (const _photo of photos) {
                 const update = {$set: {}}
 
@@ -242,12 +244,12 @@ async function _storeUpdatePhotosPublicity(productId, photos, {client, photo, pr
                     const _photoDoc = await photo.findOne({
                         productId: new ObjectId(productId),
                         _id: new ObjectId(_photo.id)
-                    })
+                    }, {session})
 
-                    if (!_photoDoc) throw ResourceNotFound.create("a photo doesn't belong to the given product")
+                    if (!_photoDoc) throw ResourceNotFound.create("a photo with given id, referencing the given product doesn't exist")
 
                     // prevent changing order of an already public photo
-                    if (_photoDoc.public) throw new Error("a photo, set to public is already public") // the error should be treated as 400: bad input
+                    if (_photoDoc.public) continue
 
                     update.$set.public = _photo.public
 
@@ -263,6 +265,13 @@ async function _storeUpdatePhotosPublicity(productId, photos, {client, photo, pr
                         : 0
 
                 } else if (_photo.public === false) {
+                    const _photoDoc = await photo.findOne({
+                        productId: new ObjectId(productId),
+                        _id: new ObjectId(_photo.id)
+                    }, {session})
+
+                    if (!_photoDoc) throw ResourceNotFound.create("a photo with given id, referencing the given product doesn't exist")
+                    
                     update.$set.public = false
                     update.$unset = {
                         order: ''
@@ -274,13 +283,13 @@ async function _storeUpdatePhotosPublicity(productId, photos, {client, photo, pr
                     _id: new ObjectId(_photo.id)
                 }, update, {session})
 
-                if (!res.matchedCount) throw new Error("a photo doesn't belong to the given product")
+                if (!res.matchedCount) throw new Error("photo found during find but not matched during update")
             }
 
             const photosDocs = await photo.find({
                 productId: new ObjectId(productId),
                 public: true
-            }).toArray()
+            }, {session}).toArray()
 
             if (!photosDocs.length) {
                 try {
@@ -290,7 +299,7 @@ async function _storeUpdatePhotosPublicity(productId, photos, {client, photo, pr
                         $set: {
                             expose: false
                         }
-                    })
+                    }, {session})
                 } catch (e) {
                     if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
                     throw e
@@ -498,4 +507,14 @@ async function _storeGetMany(expose, inStock, sortOrder, {c}) {
     return res
 }
 
-export {_storeCreate, _storeUpdate, _storeAddPhotos, _storeRemovePhotos, _storeDelete, _storeGetById, _storeGetByIdRaw, _storeGetMany}
+export {
+    _storeCreate, 
+    _storeUpdate, 
+    _storeAddPhotos, 
+    _storeRemovePhotos, 
+    _storeUpdatePhotosPublicity,
+    _storeDelete, 
+    _storeGetById, 
+    _storeGetByIdRaw, 
+    _storeGetMany
+}
