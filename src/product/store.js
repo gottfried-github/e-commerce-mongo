@@ -183,10 +183,17 @@ async function _storeRemovePhotos(productId, photoIds, {client, photo, product})
     return true
 }
 
-async function _storeReorderPhotos(productId, photos, {client, photo}) {
-    const photosDocs = await photo.find({productId}).toArray()
+async function _storeReorderPhotos(productId, photos, {client, product, photo}) {
+    const productDoc = await product.findOne({_id: new ObjectId(productId)})
 
-    if (photosDocs.length !== photos.length) throw new Error("must pass all photos, relating to the given product and only the photos that relate to the given product")
+    if (!productDoc) throw ResourceNotFound.create("given product doesn't exist")
+
+    const photosDocs = await photo.find({
+        productId: new ObjectId(productId),
+        public: true,
+    }).toArray()
+
+    if (photosDocs.length !== photos.length) throw new ValidationError("must pass all photos, relating to the given product and only the photos that relate to the given product")
 
     const session = client.startSession()
 
@@ -195,16 +202,24 @@ async function _storeReorderPhotos(productId, photos, {client, photo}) {
     try {
         res = await session.withTransaction(async () => {
             for (const _photo of photos) {
+                let res = null
+
                 try {
-                    await photo.updateOne({_id: _photo.id}, {
+                    res = await photo.updateOne({
+                        productId: new ObjectId(productId),
+                        public: true,
+                        _id: new ObjectId(_photo.id),
+                    }, {
                         $set: {
                             order: _photo.order
                         }
-                    })
+                    }, {session})
                 } catch (e) {
                     if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
                     throw e
                 }
+
+                if (!res.matchedCount) throw ResourceNotFound.create("given photo doesn't belong to the given product or isn't public")
             }
 
             return true
@@ -512,6 +527,7 @@ export {
     _storeRemovePhotos, 
     _storeUpdatePhotosPublicity,
     _storeSetCoverPhoto,
+    _storeReorderPhotos,
     _storeDelete, 
     _storeGetById, 
     _storeGetByIdRaw, 
