@@ -143,7 +143,37 @@ async function _reorderPhotos(productId, photos, {reorderPhotos, validateObjectI
 }
 
 async function _updatePhotosPublicity(productId, photos, {updatePhotosPublicity, validateObjectId}) {
+    const idE = validateObjectId(productId)
 
+    // spec: invalid id
+    if (idE) throw m.InvalidCriterion.create(idE.message, idE)
+
+    const photosIdsErrors = photos.reduce((errors, photo, i) => {
+        const e = validateObjectId(photo.id)
+
+        if (e) errors.push({
+            index: i,
+            error: e
+        })
+
+        return errors
+    }, [])
+
+    if (photosIdsErrors.length) throw m.ValidationError.create("some photosIds are incorrect", null, {
+        errors: photosIdsErrors
+    })
+
+    let res = null
+
+    try {
+        res = await updatePhotosPublicity(productId, photos)
+    } catch (e) {
+        if (e instanceof ValidationError) throw m.ValidationError.create("database-level validation failed", null, e)
+
+        throw e
+    }
+
+    return res
 }
 
 async function _setCoverPhoto(productId, photo, {setCoverPhoto, validateObjectId}) {
