@@ -7,6 +7,7 @@ import {
     _storeRemovePhotos,
     _storeReorderPhotos,
     _storeUpdatePhotosPublicity,
+    _storeGetPhotos,
     _storeSetCoverPhoto, 
     _storeDelete, 
     _storeGetById, 
@@ -21,6 +22,7 @@ import {
     _removePhotos,
     _reorderPhotos,
     _updatePhotosPublicity,
+    _getPhotos,
     _setCoverPhoto,
     _delete, 
     _getById, 
@@ -50,6 +52,10 @@ function Product({client, product, photos}) {
 
     function storeUpdatePhotosPublicity(productId, _photos) {
         return _storeUpdatePhotosPublicity(productId, _photos, {client, product, photo: photos})
+    }
+
+    function storeGetPhotos(productId, publicPhotos) {
+        return _storeGetPhotos(productId, publicPhotos, {photo: photos})
     }
 
     function storeSetCoverPhoto(productId, photo) {
@@ -109,7 +115,14 @@ function Product({client, product, photos}) {
 
         updatePhotosPublicity: (productId, photos) => {
             return _updatePhotosPublicity(productId, photos, {
-                reorderPhotos: storeReorderPhotos,
+                updatePhotosPublicity: storeUpdatePhotosPublicity,
+                validateObjectId
+            })
+        },
+
+        getPhotos: (productId, publicPhotos) => {
+            return _getPhotos(productId, publicPhotos, {
+                getPhotos: storeGetPhotos,
                 validateObjectId
             })
         },

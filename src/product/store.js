@@ -465,6 +465,20 @@ async function _storeSetCoverPhoto(productId, photo, {client, product, photoC}) 
     return true
 }
 
+async function _storeGetPhotos(productId, publicPhotos, {photo}) {
+    const query = {
+        productId: new ObjectId(productId)
+    }
+
+    if (typeof publicPhotos === 'boolean') query.public = publicPhotos
+
+    const photosCursor = photo.find(query)
+
+    return publicPhotos || typeof publicPhotos !== 'boolean' 
+        ? photosCursor.sort('order', 1).toArray() 
+        : photosCursor.toArray()
+}
+
 async function _storeDelete(id, {c}) {
     const res = await c.deleteOne({_id: new ObjectId(id)})
     if (0 === res.deletedCount) return null
@@ -535,6 +549,7 @@ export {
     _storeUpdatePhotosPublicity,
     _storeSetCoverPhoto,
     _storeReorderPhotos,
+    _storeGetPhotos,
     _storeDelete, 
     _storeGetById, 
     _storeGetByIdRaw, 
