@@ -472,11 +472,30 @@ async function _storeGetPhotos(productId, publicPhotos, {photo}) {
 
     if (typeof publicPhotos === 'boolean') query.public = publicPhotos
 
-    const photosCursor = photo.find(query)
+    const pipeline = [
+        {
+            $match: query
+        },
+        {
+            $project: {
+                id: '$_id',
+                productId: 1,
+                pathPublic: 1,
+                pathLocal: 1,
+                public: 1,
+                cover: 1,
+                order: 1
+            }
+        }
+    ]
 
-    return publicPhotos || typeof publicPhotos !== 'boolean' 
-        ? photosCursor.sort('order', 1).toArray() 
-        : photosCursor.toArray()
+    if (publicPhotos || typeof publicPhotos !== 'boolean') pipeline.push({
+        $sort: {
+            order: 1
+        }
+    })
+
+    return photo.aggregate(pipeline).toArray()
 }
 
 async function _storeDelete(id, {c}) {
