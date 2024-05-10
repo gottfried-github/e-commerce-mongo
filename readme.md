@@ -155,7 +155,7 @@ Temporarily remove the `"type": "module"` declaration from `package.json` [`1`].
 
 Inside the running container:
 
-2. `/e-commerce-mongo/test.migrations-up.sh`
+2. `/base/e-commerce-mongo/test.migrations-up.sh`
 
 ### Undo changes to `package.json`
 Put the `"type": "module"` declaration back into `package.json`

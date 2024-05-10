@@ -88,7 +88,7 @@ export default function reorderPhotos() {
     })
 
     describe("passed a photo that doesn't belong to the given product", () => {
-      it('throws ResourceNotFound', async () => {
+      it('throws ValidationError', async () => {
         const client = new MongoClient(
           `mongodb://${process.env.APP_DB_USER}:${process.env.APP_DB_PASS}@${process.env.NET_NAME}/${process.env.APP_DB_NAME}`
         )
@@ -153,8 +153,8 @@ export default function reorderPhotos() {
           await product.deleteMany({})
           await client.close()
 
-          console.log('_storeUpdatePhotosPublicity threw, error:', e)
-          return assert(ResourceNotFound.code === e.code)
+          console.log('_storeReorderPhotos threw, error:', e)
+          return assert.instanceOf(e, ValidationError)
         }
 
         await photo.deleteMany({})
@@ -241,7 +241,7 @@ export default function reorderPhotos() {
     })
 
     describe('passed a photo that is not public in the database', () => {
-      it('throws ResourceNotFound', async () => {
+      it('throws ValidationError', async () => {
         const client = new MongoClient(
           `mongodb://${process.env.APP_DB_USER}:${process.env.APP_DB_PASS}@${process.env.NET_NAME}/${process.env.APP_DB_NAME}`
         )
@@ -303,8 +303,8 @@ export default function reorderPhotos() {
           await product.deleteMany({})
           await client.close()
 
-          console.log('_storeUpdatePhotosPublicity threw, error:', e)
-          return assert(ResourceNotFound.code === e.code)
+          console.log('_storeReorderPhotos threw, error:', e)
+          return assert.instanceOf(e, ValidationError)
         }
 
         await photo.deleteMany({})
