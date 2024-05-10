@@ -210,16 +210,25 @@ async function _storeReorderPhotos(productId, photos, { client, product, photo }
 
   if (!productDoc) throw ResourceNotFound.create("given product doesn't exist")
 
-  const photosDocs = await photo
+  const photosDocsMatched = await photo
+    .find({
+      productId: new ObjectId(productId),
+      _id: { $in: photos.map(photo => photo.id).map(id => new ObjectId(id)) },
+      public: true,
+    })
+    .toArray()
+
+  const photosDocsAll = await photo
     .find({
       productId: new ObjectId(productId),
       public: true,
     })
     .toArray()
 
-  if (photosDocs.length !== photos.length)
+  // not all `photos` are public or exist in the product, or `photos` are not all public photos
+  if (photosDocsMatched.length < photos.length || photosDocsAll.length > photos.length)
     throw new ValidationError(
-      'must pass all photos, relating to the given product and only the photos that relate to the given product'
+      'must pass all public photos, relating to the given product and only the photos that relate to the given product'
     )
 
   const session = client.startSession()
