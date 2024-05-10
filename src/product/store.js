@@ -85,6 +85,72 @@ async function _storeUpdate(id, { write, remove }, { product, photo }) {
   return true
 }
 
+async function _storeDelete(id, { c }) {
+  const res = await c.deleteOne({ _id: new ObjectId(id) })
+  if (0 === res.deletedCount) return null
+  return true
+}
+
+async function _storeGetById(id, { c }) {
+  const res = await c
+    .aggregate([
+      { $match: { _id: new ObjectId(id) } },
+      {
+        $project: {
+          name: 1,
+          price: 1,
+          is_in_stock: 1,
+          expose: 1,
+          description: 1,
+          time: 1,
+        },
+      },
+    ])
+    .toArray()
+
+  return res[0]
+}
+
+async function _storeGetByIdRaw(id, { c }) {
+  return c.findOne({ _id: new ObjectId(id) })
+}
+
+/**
+ * @param {Boolean} expose what to match in expose field
+ * @param {Boolean} inStock what to match in is_in_stock field
+ * @param {Array} sortOrder sort order and sort direction for each field
+ */
+async function _storeGetMany(expose, inStock, sortOrder, { c }) {
+  const pipeline = []
+
+  const match = {}
+  if ('boolean' === typeof expose) match.expose = expose
+  if ('boolean' === typeof inStock) match.is_in_stock = inStock
+  pipeline.push({ $match: match })
+
+  if (sortOrder) {
+    const sort = {}
+    for (const i of sortOrder) sort[i.name] = i.dir
+    pipeline.push({ $sort: sort })
+  }
+
+  pipeline.push({
+    $project: {
+      id: '$_id',
+      name: 1,
+      price: 1,
+      is_in_stock: 1,
+      expose: 1,
+      description: 1,
+      time: 1,
+    },
+  })
+
+  const res = await c.aggregate(pipeline).toArray()
+
+  return res
+}
+
 /**
  * @param {ObjectId} id
  * @param {Array} photos photo: {
@@ -590,72 +656,6 @@ async function _storeGetPhotos(productId, publicPhotos, { photo }) {
     })
 
   return photo.aggregate(pipeline).toArray()
-}
-
-async function _storeDelete(id, { c }) {
-  const res = await c.deleteOne({ _id: new ObjectId(id) })
-  if (0 === res.deletedCount) return null
-  return true
-}
-
-async function _storeGetById(id, { c }) {
-  const res = await c
-    .aggregate([
-      { $match: { _id: new ObjectId(id) } },
-      {
-        $project: {
-          name: 1,
-          price: 1,
-          is_in_stock: 1,
-          expose: 1,
-          description: 1,
-          time: 1,
-        },
-      },
-    ])
-    .toArray()
-
-  return res[0]
-}
-
-async function _storeGetByIdRaw(id, { c }) {
-  return c.findOne({ _id: new ObjectId(id) })
-}
-
-/**
- * @param {Boolean} expose what to match in expose field
- * @param {Boolean} inStock what to match in is_in_stock field
- * @param {Array} sortOrder sort order and sort direction for each field
- */
-async function _storeGetMany(expose, inStock, sortOrder, { c }) {
-  const pipeline = []
-
-  const match = {}
-  if ('boolean' === typeof expose) match.expose = expose
-  if ('boolean' === typeof inStock) match.is_in_stock = inStock
-  pipeline.push({ $match: match })
-
-  if (sortOrder) {
-    const sort = {}
-    for (const i of sortOrder) sort[i.name] = i.dir
-    pipeline.push({ $sort: sort })
-  }
-
-  pipeline.push({
-    $project: {
-      id: '$_id',
-      name: 1,
-      price: 1,
-      is_in_stock: 1,
-      expose: 1,
-      description: 1,
-      time: 1,
-    },
-  })
-
-  const res = await c.aggregate(pipeline).toArray()
-
-  return res
 }
 
 export {
