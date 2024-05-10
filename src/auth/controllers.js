@@ -1,12 +1,12 @@
-import {ObjectId} from 'bson'
+import { ObjectId } from 'bson'
 
 import * as m from '../../../e-commerce-common/messages.js'
-import {ValidationError, ValidationConflict, ValueNotUnique} from '../helpers.js'
+import { ValidationError, ValidationConflict, ValueNotUnique } from '../helpers.js'
 
 /**
  * TODO: see "`create`: validate password before writing" and "`create`: binData validation in additional validation"
- * 
-*/
+ *
+ */
 // async function _create(fields, {create, generateHash}) {
 //     const data = {name: fields.name, ...generateHash(fields.password)}
 
@@ -35,36 +35,34 @@ import {ValidationError, ValidationConflict, ValueNotUnique} from '../helpers.js
 // }
 
 // async function _delete() {
-    
+
 // }
 
-async function _getById(id, {getById, validateObjectId}) {
-    const idE = validateObjectId(id)
-    if (idE) throw m.InvalidCriterion.create(idE.message, idE)
+async function _getById(id, { getById, validateObjectId }) {
+  const idE = validateObjectId(id)
+  if (idE) throw m.InvalidCriterion.create(idE.message, idE)
 
-    const doc = await getById(new ObjectId(id))
+  const doc = await getById(new ObjectId(id))
 
-    if (null === doc) return null
-    
-    const {name, _id} = doc
+  if (null === doc) return null
 
-    // see User store in bazar-api
-    return {name, id: _id}
+  const { name, _id } = doc
+
+  // see User store in bazar-api
+  return { name, id: _id }
 }
 
-async function _getByName(name, password, {getByName, isEqualHash}) {
-    const doc = await getByName(name)
+async function _getByName(name, password, { getByName, isEqualHash }) {
+  const doc = await getByName(name)
 
-    if (null === doc) return null
+  if (null === doc) return null
 
-    // see Exposing password data
-    if (!isEqualHash(doc.salt.buffer, doc.hash.buffer, password)) throw m.InvalidCriterion.create("password is incorrect")
+  // see Exposing password data
+  if (!isEqualHash(doc.salt.buffer, doc.hash.buffer, password))
+    throw m.InvalidCriterion.create('password is incorrect')
 
-    // see User store in bazar-api
-    return {name: doc.name, id: doc._id}
+  // see User store in bazar-api
+  return { name: doc.name, id: doc._id }
 }
 
-export {
-    _getById,
-    _getByName,
-}
+export { _getById, _getByName }

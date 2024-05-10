@@ -1,46 +1,46 @@
 const schemaPrev = require('./20231227152752-photo.js').schema
 
-const schemaBase = {...schemaPrev}
+const schemaBase = { ...schemaPrev }
 
-schemaBase.properties.productId = {bsonType: 'objectId'}
-schemaBase.properties.cover = {bsonType: 'bool'}
+schemaBase.properties.productId = { bsonType: 'objectId' }
+schemaBase.properties.cover = { bsonType: 'bool' }
 schemaBase.required.push('productId', 'cover', 'public')
 
 const schemaNotPublic = JSON.parse(JSON.stringify(schemaBase))
 schemaNotPublic.properties.public = {
   bsonType: 'bool',
-  enum: [false]
+  enum: [false],
 }
 
 const schemaPublic = JSON.parse(JSON.stringify(schemaBase))
 schemaPublic.properties.public = {
   bsonType: 'bool',
-  enum: [true]
+  enum: [true],
 }
-schemaPublic.properties.order = {bsonType: 'int'}
+schemaPublic.properties.order = { bsonType: 'int' }
 schemaPublic.required.push('order')
 
 const schema = {
-  oneOf: [schemaNotPublic, schemaPublic]
+  oneOf: [schemaNotPublic, schemaPublic],
 }
 
 module.exports = {
   async up(db, client) {
     return db.command({
-      collMod: "photo",
+      collMod: 'photo',
       validator: {
-          $jsonSchema: schema
-      }
-    })    
+        $jsonSchema: schema,
+      },
+    })
   },
   async down(db, client) {
     return db.command({
-      collMod: "photo",
+      collMod: 'photo',
       validator: {
-          $jsonSchema: schemaPrev
-      }
+        $jsonSchema: schemaPrev,
+      },
     })
   },
 
-  schema
-};
+  schema,
+}

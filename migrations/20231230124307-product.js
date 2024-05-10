@@ -1,6 +1,6 @@
 const schemaPrev = require('./20230529183415-time.js').schema
 
-const schema = {...schemaPrev}
+const schema = { ...schemaPrev }
 
 delete schema.oneOf[0].properties.photos
 delete schema.oneOf[0].properties.photos_all
@@ -16,18 +16,18 @@ delete schema.oneOf[1].properties.cover_photo
 module.exports = {
   async up(db, client) {
     return db.command({
-      collMod: "product",
+      collMod: 'product',
       validator: {
-        $jsonSchema: schema
-      }
+        $jsonSchema: schema,
+      },
     })
   },
   async down(db, client) {
     return db.command({
-      collMod: "product",
+      collMod: 'product',
       validator: {
-          $jsonSchema: schemaPrev
-      }
+        $jsonSchema: schemaPrev,
+      },
     })
-  }
-};
+  },
+}

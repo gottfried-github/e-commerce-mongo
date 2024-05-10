@@ -1,5 +1,5 @@
-import {testValidateBSON} from './item_validateBSON.js'
+import { testValidateBSON } from './item_validateBSON.js'
 
-describe("_validateBSON", () => {
-    testValidateBSON()
+describe('_validateBSON', () => {
+  testValidateBSON()
 })
