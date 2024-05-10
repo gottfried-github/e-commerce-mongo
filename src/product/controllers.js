@@ -176,6 +176,15 @@ async function _updatePhotosPublicity(productId, photos, {updatePhotosPublicity,
     return res
 }
 
+async function _getPhotos(productId, publicPhotos, {getPhotos, validateObjectId}) {
+    const productIdE = validateObjectId(productId)
+
+    // spec: invalid id
+    if (productIdE) throw m.InvalidCriterion.create(productIdE.message, productIdE)
+
+    return getPhotos(productId, publicPhotos)
+}
+
 async function _setCoverPhoto(productId, photo, {setCoverPhoto, validateObjectId}) {
     const productIdE = validateObjectId(productId)
 
@@ -237,6 +246,7 @@ export {
     _removePhotos,
     _reorderPhotos,
     _updatePhotosPublicity,
+    _getPhotos,
     _setCoverPhoto,
     _delete, 
     _getById, 
