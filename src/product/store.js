@@ -85,9 +85,37 @@ async function _storeUpdate(id, { write, remove }, { product, photo }) {
   return true
 }
 
-async function _storeDelete(id, { c }) {
-  const res = await c.deleteOne({ _id: new ObjectId(id) })
-  if (0 === res.deletedCount) return null
+async function _storeDelete(id, { client, product, photo }) {
+  const session = client.startSession()
+
+  let res = null
+
+  try {
+    res = await session.withTransaction(async () => {
+      const resPhotos = await photo.deleteMany({ productId: new ObjectId(id) }, { session })
+      const res = await product.deleteOne({ _id: new ObjectId(id) }, { session })
+
+      if (!res.deletedCount) throw ResourceNotFound.create("given product doesn't exist")
+
+      return true
+    })
+  } catch (e) {
+    await session.endSession()
+
+    throw e
+  }
+
+  // for some reason, withTransaction returns an object with the `ok` property instead of the return value of the callback
+  if (res.ok !== 1) {
+    await session.endSession()
+
+    const e = new Error('transaction completed but return value is not ok')
+    e.data = res
+
+    throw e
+  }
+
+  await session.endSession()
   return true
 }
 
