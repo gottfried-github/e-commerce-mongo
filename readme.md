@@ -163,11 +163,11 @@ Put the `"type": "module"` declaration back into `package.json`
 ## 4. Run the tests
 If you have the container running from `1` in the previous section, then skip this step:
 
-1. `docker compose -f test.run.docker-compose.yml run bash`
+1. `docker compose -f test.run.docker-compose.yml run node bash`
 
 Inside the running container:
 
-2. `npm run test:store`
+2. `cd /base/e-commerce-mongo && npm run test:store`
 
 ## 5. After testing, clean up the environment
 We need to unwind the migrations. We're going to use `migrate-mongo`, so we need to temporarily remove the `"type": "module"` declaration from `package.json` again, as we did in [`2`](2.-init-database).
