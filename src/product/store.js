@@ -223,7 +223,7 @@ async function _storeRemovePhotos(productId, photoIds, { client, photo, product 
     res = await session.withTransaction(async () => {
       const resDelete = await photo.deleteMany(
         {
-          productId,
+          productId: new ObjectId(productId),
           _id: { $in: photoIds.map(id => new ObjectId(id)) },
         },
         { session }
@@ -233,7 +233,7 @@ async function _storeRemovePhotos(productId, photoIds, { client, photo, product 
       if (resDelete.deletedCount < photoIds.length)
         throw ResourceNotFound.create('not all given photos belong to the given product')
 
-      const _product = await product.findOne({ _id: productId }, { session })
+      const _product = await product.findOne({ _id: new ObjectId(productId) }, { session })
 
       if (!_product) throw ResourceNotFound.create("given product doesn't exist")
 
@@ -242,21 +242,24 @@ async function _storeRemovePhotos(productId, photoIds, { client, photo, product 
       const photosPublic = await photo
         .find(
           {
-            productId,
+            productId: new ObjectId(productId),
             public: true,
           },
           { session }
         )
         .toArray()
 
-      const photoCover = await photo.findOne({ productId, cover: true }, { session })
+      const photoCover = await photo.findOne(
+        { productId: new ObjectId(productId), cover: true },
+        { session }
+      )
 
       if (!photosPublic.length || !photoCover) {
         let resProduct = null
 
         try {
           resProduct = await product.updateOne(
-            { _id: productId },
+            { _id: new ObjectId(productId) },
             {
               $set: {
                 expose: false,
@@ -523,7 +526,7 @@ async function _storeSetCoverPhoto(productId, photo, { client, product, photoC }
 
   try {
     res = await session.withTransaction(async () => {
-      const productDoc = await product.findOne({ _id: productId }, { session })
+      const productDoc = await product.findOne({ _id: new ObjectId(productId) }, { session })
 
       if (!productDoc) throw ResourceNotFound.create("given product doesn't exist")
 

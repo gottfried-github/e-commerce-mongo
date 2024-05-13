@@ -72,10 +72,10 @@ Treats all given photos as public. If any of the photos aren't public, throws `R
 **productId**: string
 **photos**: 
 ```js
-{
+[{
     id: string,
     public: boolean,
-}
+}]
 ```
 
 #### Description
@@ -83,7 +83,7 @@ If a non-public photo should be made public, it's made that and it's order is se
 
 A public photo is made non-public, if so is specified.
 
-If after all photos are updated, not public photos are left and the product's `expose` is `true`, it's set to `false`.
+If after all photos are updated, no public photos are left and the product's `expose` is `true`, it's set to `false`.
 
 ### `_storeSetCoverPhoto`
 #### Parameters

@@ -35,7 +35,7 @@ function Product({ client, product, photos }) {
   }
 
   function storeUpdate(id, fields) {
-    return _storeUpdate(id, fields, { c: product })
+    return _storeUpdate(id, fields, { product, photo: photos })
   }
 
   function storeAddPhotos(id, _photos) {
@@ -59,11 +59,11 @@ function Product({ client, product, photos }) {
   }
 
   function storeSetCoverPhoto(productId, photo) {
-    return _storeSetCoverPhoto(productId, photo, { client, product, photoC: photo })
+    return _storeSetCoverPhoto(productId, photo, { client, product, photoC: photos })
   }
 
   function storeDelete(id) {
-    return _storeDelete(id, { c: product })
+    return _storeDelete(id, { client, product, photo: photos })
   }
 
   function storeGetById(id) {

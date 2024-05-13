@@ -239,16 +239,7 @@ async function _delete(id, { storeDelete, validateObjectId }) {
   // spec: invalid id
   if (idE) throw m.InvalidCriterion.create(idE.message, idE)
 
-  const res = await storeDelete(id)
-
-  // spec: no document with given id
-  if (null === res)
-    throw m.InvalidCriterion.create(
-      'id must be of an existing document: no document found with given id'
-    )
-
-  // spec: success
-  return true
+  return storeDelete(id)
 }
 
 /**
