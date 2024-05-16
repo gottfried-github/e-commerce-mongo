@@ -1,32 +1,31 @@
 services:
-    base:
-        image: mongo
-        volumes: 
-            - ./data_test:/data/db
-            - .:/e-commerce-mongo
-        ports: 
-            - 27017:27017
-        command:
-            '--replSet rs0 --keyFile /data/db/keyfile --bind_ip base --dbpath /data/db'
-        environment:
-            MONGO_INITDB_ROOT_USERNAME: admin
-            MONGO_INITDB_ROOT_PASSWORD: asdopihjwefpiub
-        healthcheck:
-            test: ["CMD", "bash", "-c", "/e-commerce-mongo/test.healthcheck.sh"]
-    node:
-        build: 
-            context: .
-            dockerfile: ./test.run.Dockerfile
-        volumes:
-            - ../:/base
-        ports:
-            - 3000:3000
-        environment: 
-            APP_DB_USER: app
-            # the same as APP_PSSWD in the init service of init-db.docker-compose.yml
-            APP_DB_PASS: piuewfohjberyu
-            APP_DB_NAME: app
-            NET_NAME: base
-        depends_on:
-            base:
-                condition: service_healthy
+  base:
+    image: mongo
+    volumes:
+      - ./data_test:/data/db
+      - .:/e-commerce-mongo
+    ports:
+      - 27017:27017
+    command: '--replSet rs0 --keyFile /data/db/keyfile --bind_ip base --dbpath /data/db'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: asdopihjwefpiub
+    healthcheck:
+      test: ['CMD', 'bash', '-c', '/e-commerce-mongo/test.healthcheck.sh']
+  node:
+    build:
+      context: .
+      dockerfile: ./test.run.Dockerfile
+    volumes:
+      - ../:/base
+    ports:
+      - 3000:3000
+    environment:
+      APP_DB_USER: app
+      # the same as APP_PSSWD in the init service of init-db.docker-compose.yml
+      APP_DB_PASS: piuewfohjberyu
+      APP_DB_NAME: app
+      NET_NAME: base
+    depends_on:
+      base:
+        condition: service_healthy

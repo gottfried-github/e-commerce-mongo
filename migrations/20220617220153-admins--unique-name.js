@@ -6,7 +6,7 @@ module.exports = {
     // Example:
     // await db.collection('albums').updateOne({artist: 'The Beatles'}, {$set: {blacklisted: true}});
 
-    return db.collection('admins').createIndex({name: 1}, {unique: true, name: indexName})
+    return db.collection('admins').createIndex({ name: 1 }, { unique: true, name: indexName })
   },
 
   async down(db, client) {
@@ -14,5 +14,5 @@ module.exports = {
     // Example:
     // await db.collection('albums').updateOne({artist: 'The Beatles'}, {$set: {blacklisted: false}});
     return db.collection('admins').dropIndex(indexName)
-  }
-};
+  },
+}

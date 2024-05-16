@@ -10,9 +10,9 @@ import crypto from 'crypto'
 // }
 
 function isEqualHash(salt, hash, password) {
-    const _hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512')
-    // note point 5. in notes
-    return crypto.timingSafeEqual(_hash, hash)
+  const _hash = crypto.pbkdf2Sync(password, salt, 10000, 512, 'sha512')
+  // note point 5. in notes
+  return crypto.timingSafeEqual(_hash, hash)
 }
 
-export {isEqualHash}
+export { isEqualHash }

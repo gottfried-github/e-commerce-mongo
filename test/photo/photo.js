@@ -1,5 +1,5 @@
-import {testCreateMany} from './photo_controllers.js'
+import { testCreateMany } from './photo_controllers.js'
 
-describe("photo", () => {
-    testCreateMany()
+describe('photo', () => {
+  testCreateMany()
 })
