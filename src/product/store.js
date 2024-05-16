@@ -124,6 +124,24 @@ async function _storeGetById(id, { c }) {
     .aggregate([
       { $match: { _id: new ObjectId(id) } },
       {
+        $lookup: {
+          from: 'photo',
+          localField: '_id',
+          foreignField: 'productId',
+          pipeline: [{ $addFields: { id: '$_id' } }],
+          as: 'photos_all',
+        },
+      },
+      {
+        $lookup: {
+          from: 'photo',
+          localField: '_id',
+          foreignField: 'productId',
+          pipeline: [{ $match: { cover: true } }],
+          as: 'photo_cover_lookup',
+        },
+      },
+      {
         $project: {
           name: 1,
           price: 1,
@@ -131,6 +149,25 @@ async function _storeGetById(id, { c }) {
           expose: 1,
           description: 1,
           time: 1,
+          photos_all: 1,
+          photo_cover: {
+            $cond: {
+              if: { $gt: [{ $size: '$photo_cover_lookup' }, 0] },
+              then: { $arrayElemAt: ['$photo_cover_lookup', 0] },
+              else: null,
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          photo_cover: {
+            $cond: {
+              if: { $eq: ['$photo_cover', null] },
+              then: null,
+              else: { $mergeObjects: ['$photo_cover', { id: '$photo_cover._id' }] },
+            },
+          },
         },
       },
     ])
@@ -154,7 +191,27 @@ async function _storeGetMany(expose, inStock, sortOrder, { c }) {
   const match = {}
   if ('boolean' === typeof expose) match.expose = expose
   if ('boolean' === typeof inStock) match.is_in_stock = inStock
-  pipeline.push({ $match: match })
+  pipeline.push(
+    { $match: match },
+    {
+      $lookup: {
+        from: 'photo',
+        localField: '_id',
+        foreignField: 'productId',
+        pipeline: [{ $addFields: { id: '$_id' } }],
+        as: 'photos_all',
+      },
+    },
+    {
+      $lookup: {
+        from: 'photo',
+        localField: '_id',
+        foreignField: 'productId',
+        pipeline: [{ $match: { cover: true } }],
+        as: 'photo_cover_lookup',
+      },
+    }
+  )
 
   if (sortOrder) {
     const sort = {}
@@ -162,17 +219,38 @@ async function _storeGetMany(expose, inStock, sortOrder, { c }) {
     pipeline.push({ $sort: sort })
   }
 
-  pipeline.push({
-    $project: {
-      id: '$_id',
-      name: 1,
-      price: 1,
-      is_in_stock: 1,
-      expose: 1,
-      description: 1,
-      time: 1,
+  pipeline.push(
+    {
+      $project: {
+        id: '$_id',
+        name: 1,
+        price: 1,
+        is_in_stock: 1,
+        expose: 1,
+        description: 1,
+        time: 1,
+        photos_all: 1,
+        photo_cover: {
+          $cond: {
+            if: { $gt: [{ $size: '$photo_cover_lookup' }, 0] },
+            then: { $arrayElemAt: ['$photo_cover_lookup', 0] },
+            else: null,
+          },
+        },
+      },
     },
-  })
+    {
+      $addFields: {
+        photo_cover: {
+          $cond: {
+            if: { $eq: ['$photo_cover', null] },
+            then: null,
+            else: { $mergeObjects: ['$photo_cover', { id: '$photo_cover._id' }] },
+          },
+        },
+      },
+    }
+  )
 
   const res = await c.aggregate(pipeline).toArray()
 
