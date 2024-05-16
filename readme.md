@@ -76,8 +76,8 @@ A `product` has photos, associated with it. These are stored as documents in a s
 
 ### `_storeAddPhotos`
 #### Parameters
-**productId**: `string`
-**photos**: 
+* **productId**: `string`
+* **photos**: 
 ```js
 {
     pathPublic: string,
@@ -90,20 +90,20 @@ Creates non-public, non-cover photos with the given data for the given product.
 
 ### `_storeRemovePhotos`
 #### Parameters
-**productId**: string
-**photoIds**: [string]
+* **productId**: string
+* **photoIds**: [string]
 
 #### Behavior
-**success**: returns `true`
-**deleted photos count is less than photosIds count**: has no effect and returns `ResourceNotFound`
-**product with given productId not found**: has no effect and returns `ResourceNotFound`
+* **success**: returns `true`
+* **deleted photos count is less than photosIds count**: has no effect and returns `ResourceNotFound`
+* **product with given productId not found**: has no effect and returns `ResourceNotFound`
 
 If product's `expose` is `true` and after photos deletion there's either no public photos left or no cover photo left or both, sets `expose` to `false`.
 
 ### `_storeReorderPhotos`
 #### Parameters
-**productId**: string
-**photos**:
+* **productId**: string
+* **photos**:
 ```js
 {
     id: string,
@@ -112,9 +112,9 @@ If product's `expose` is `true` and after photos deletion there's either no publ
 ```
 
 #### Behavior
-**success**: reoders photos and returns true
-**if some or all photos don't belong to given productId or if the given photos are not all photos, related to the given productId**: throws a `ValidationError`
-**some of the given photos aren't public**: throws `ResourceNotFound`
+* **success**: reoders photos and returns true
+* **if some or all photos don't belong to given productId or if the given photos are not all photos, related to the given productId**: throws a `ValidationError`
+* **some of the given photos aren't public**: throws `ResourceNotFound`
 
 #### Description
 All public photos, related to the given `productId` must be specified and only the photos, related to the given `productId`. Otherwise, throws a `ValidationError`.
@@ -123,8 +123,8 @@ Treats all given photos as public. If any of the photos aren't public, throws `R
 
 ### `_storeUpdatePhotosPublicity`
 #### Parameters
-**productId**: string
-**photos**: 
+* **productId**: string
+* **photos**: 
 ```js
 [{
     id: string,
@@ -141,8 +141,8 @@ If after all photos are updated, no public photos are left and the product's `ex
 
 ### `_storeSetCoverPhoto`
 #### Parameters
-**productId**: string
-**photo**: 
+* **productId**: string
+* **photo**: 
 ```js
 {
     id: string,
