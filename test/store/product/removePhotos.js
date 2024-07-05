@@ -1,7 +1,7 @@
 import { MongoClient, ObjectId } from 'mongodb'
 import { assert } from 'chai'
 
-import { ResourceNotFound } from '../../../../e-commerce-common/messages.js'
+import { ResourceNotFound, ValidationError } from '../../../../e-commerce-common/messages.js'
 import { _storeRemovePhotos } from '../../../src/product/store.js'
 
 export default function removePhotos() {
@@ -197,7 +197,7 @@ export default function removePhotos() {
     })
 
     describe('delete all public photos of an exposed product', () => {
-      it("sets product's expose to false", async () => {
+      it("throws a validation error and doesn't delete the photos", async () => {
         const client = new MongoClient(
           `mongodb://${process.env.APP_DB_USER}:${process.env.APP_DB_PASS}@${process.env.NET_NAME}/${process.env.APP_DB_NAME}`
         )
@@ -276,21 +276,27 @@ export default function removePhotos() {
             photo,
           })
         } catch (e) {
+          const photosPublicDocs = await photo.find({ public: true }).toArray()
+
           await photo.deleteMany({})
           await product.deleteMany({})
           await client.close()
 
-          return assert.fail('_storeRemovePhotos threw')
+          return assert(
+            e.code === ValidationError.code && photosPublicDocs.length === photosPublic.length
+          )
         }
 
-        const productDoc = await product.findOne({ _id: resProduct.insertedId })
+        await photo.deleteMany({})
+        await product.deleteMany({})
+        await client.close()
 
-        assert(!productDoc.expose)
+        assert.fail("didn't throw")
       })
     })
 
     describe('public photos are left but no cover photo left on an exposed product', () => {
-      it("sets product's expose to false", async () => {
+      it("throws a ValidationError and doesn't remove the photos", async () => {
         const client = new MongoClient(
           `mongodb://${process.env.APP_DB_USER}:${process.env.APP_DB_PASS}@${process.env.NET_NAME}/${process.env.APP_DB_NAME}`
         )
@@ -372,16 +378,22 @@ export default function removePhotos() {
             photo,
           })
         } catch (e) {
+          const photosToRemoveDocs = await photo.find({ _id: { $in: photosToRemoveIds } }).toArray()
+
           await photo.deleteMany({})
           await product.deleteMany({})
           await client.close()
 
-          return assert.fail('_storeRemovePhotos threw')
+          return assert(
+            e.code === ValidationError.code && photosToRemoveDocs.length === photosToRemove.length
+          )
         }
 
-        const productDoc = await product.findOne({ _id: resProduct.insertedId })
+        await photo.deleteMany({})
+        await product.deleteMany({})
+        await client.close()
 
-        assert(!productDoc.expose)
+        assert.fail("didn't throw")
       })
     })
   })
