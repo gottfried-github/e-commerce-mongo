@@ -1,6 +1,9 @@
 import { ObjectId } from 'bson'
 
-import { ResourceNotFound } from '../../../e-commerce-common/messages.js'
+import {
+  ResourceNotFound,
+  ValidationError as MessageValidationError,
+} from '../../../e-commerce-common/messages.js'
 
 import { ValidationError, validateObjectId } from '../helpers.js'
 
@@ -333,28 +336,11 @@ async function _storeRemovePhotos(productId, photoIds, { client, photo, product 
       )
 
       if (!photosPublic.length || !photoCover) {
-        let resProduct = null
+        const message = !photosPublic.length
+          ? 'Неможливо видалити усі публічні фото із публічного продукту. Спершу приховайте продукт'
+          : 'Неможливо видалити обкладинку із публічного продукту. Спершу приховайте продукт'
 
-        try {
-          resProduct = await product.updateOne(
-            { _id: new ObjectId(productId) },
-            {
-              $set: {
-                expose: false,
-              },
-            },
-            { session }
-          )
-        } catch (e) {
-          if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
-          throw e
-        }
-
-        if (!resProduct.matchedCount) throw new Error("updateOne doesn't match existing product")
-        if (resProduct.modifiedCount === 0)
-          throw new Error("product's expose field doesn't get updated")
-
-        return true
+        throw MessageValidationError.create(message)
       }
 
       return true
@@ -545,6 +531,10 @@ async function _storeUpdatePhotosPublicity(productId, photos, { client, photo, p
           throw new Error('photo found during find but not matched during update')
       }
 
+      const _product = await product.findOne({ _id: new ObjectId(productId) }, { session })
+
+      if (!_product.expose) return true
+
       const photosDocs = await photo
         .find(
           {
@@ -556,22 +546,9 @@ async function _storeUpdatePhotosPublicity(productId, photos, { client, photo, p
         .toArray()
 
       if (!photosDocs.length) {
-        try {
-          await product.updateOne(
-            {
-              _id: new ObjectId(productId),
-            },
-            {
-              $set: {
-                expose: false,
-              },
-            },
-            { session }
-          )
-        } catch (e) {
-          if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
-          throw e
-        }
+        throw MessageValidationError.create(
+          'Неможливо приховати усі публічні фотографії для публічного продукту. Спершу приховайте продукт'
+        )
       }
 
       return true
@@ -661,6 +638,12 @@ async function _storeSetCoverPhoto(productId, photo, { client, product, photoC }
 
         return true
       } else if (photo.cover === false) {
+        if (productDoc.expose) {
+          throw MessageValidationError.create(
+            'Неможливо прибрати фото із обкладинки публічного продукту. Спершу приховайте продукт.'
+          )
+        }
+
         let res = null
 
         try {
@@ -684,29 +667,6 @@ async function _storeSetCoverPhoto(productId, photo, { client, product, photoC }
         if (!res.matchedCount)
           throw ResourceNotFound.create("given photo doesn't belong to the given product")
 
-        if (!productDoc.expose) return true
-
-        let resProduct = null
-
-        try {
-          resProduct = await product.updateOne(
-            {
-              _id: new ObjectId(productId),
-            },
-            {
-              $set: {
-                expose: false,
-              },
-            },
-            { session }
-          )
-        } catch (e) {
-          if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
-          throw e
-        }
-
-        if (!resProduct.matchedCount)
-          throw new Error('product found during find but not matched during update')
         return true
       } else {
         throw new Error('photo cover must be boolean')
