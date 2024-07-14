@@ -1,7 +1,7 @@
 import { MongoClient, ObjectId } from 'mongodb'
 import { assert } from 'chai'
 
-import { ResourceNotFound } from '../../../../e-commerce-common/messages.js'
+import { ResourceNotFound, ValidationError } from '../../../../e-commerce-common/messages.js'
 import { _storeUpdatePhotosPublicity } from '../../../src/product/store.js'
 
 export default function updatePhotosPublicity() {
@@ -493,7 +493,7 @@ export default function updatePhotosPublicity() {
     })
 
     describe('sets all currently public photos of an exposed product to false', () => {
-      it('sets the expose field on the product to false', async () => {
+      it("throws a ValidationError and doesn't update the photos", async () => {
         const client = new MongoClient(
           `mongodb://${process.env.APP_DB_USER}:${process.env.APP_DB_PASS}@${process.env.NET_NAME}/${process.env.APP_DB_NAME}`
         )
@@ -567,21 +567,20 @@ export default function updatePhotosPublicity() {
             photo,
           })
         } catch (e) {
+          const photosDocs = await photo.find({ public: true }).toArray()
+
           await photo.deleteMany({})
           await product.deleteMany({})
           await client.close()
 
-          console.log('_storeUpdatePhotosPublicity threw, error:', e)
-          return assert.fail('threw an error')
+          return assert(e.code === ValidationError.code && photosDocs.length === photos.length)
         }
-
-        const productDoc = await product.findOne({ _id: resProduct.insertedId })
 
         await photo.deleteMany({})
         await product.deleteMany({})
         await client.close()
 
-        assert(!productDoc.expose)
+        assert.fail("didn't throw")
       })
     })
   })
