@@ -20,16 +20,16 @@ export default function addPhotos(client) {
 
         const photos = [
           {
-            pathPublic: '3',
-            pathLocal: '3',
+            pathsPublic: { original: '3' },
+            pathsLocal: { original: '3' },
           },
           {
-            pathPublic: '4',
-            pathLocal: '4',
+            pathsPublic: { original: '4' },
+            pathsLocal: { original: '4' },
           },
           {
-            pathPublic: '5',
-            pathLocal: '5',
+            pathsPublic: { original: '5' },
+            pathsLocal: { original: '5' },
           },
         ]
 
@@ -51,9 +51,7 @@ export default function addPhotos(client) {
 
           const photosWritten = await photo
             .find({
-              pathPublic: {
-                $in: ['3', '4', '5'],
-              },
+              'pathsPublic.original': { $in: ['3', '4', '5'] },
             })
             .toArray()
 
@@ -90,16 +88,16 @@ export default function addPhotos(client) {
 
         const photos = [
           {
-            pathPublic: '0',
-            pathLocal: '0',
+            pathsPublic: { original: '0' },
+            pathsLocal: { original: '0' },
           },
           {
-            pathPublic: '1',
-            pathLocal: '1',
+            pathsPublic: { original: '1' },
+            pathsLocal: { original: '1' },
           },
           {
-            pathPublic: '2',
-            pathLocal: '2',
+            pathsPublic: { original: '2' },
+            pathsLocal: { original: '2' },
           },
         ]
 
@@ -119,7 +117,7 @@ export default function addPhotos(client) {
 
         const photosWritten = await photo
           .find({
-            pathPublic: {
+            'pathsPublic.original': {
               $in: ['0', '1', '2'],
             },
           })
