@@ -703,8 +703,8 @@ async function _storeGetPhotos(productId, publicPhotos, { photo }) {
       $project: {
         id: '$_id',
         productId: 1,
-        pathPublic: 1,
-        pathLocal: 1,
+        pathsPublic: 1,
+        pathsLocal: 1,
         public: 1,
         cover: 1,
         order: 1,
