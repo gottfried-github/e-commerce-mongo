@@ -6,18 +6,20 @@ import {
 } from '../../../e-commerce-common/messages.js'
 
 import { ValidationError, validateObjectId } from '../helpers.js'
+import { prepareFields } from './utils.js'
 
 const VALIDATION_FAIL_MSG = 'data validation failed'
 
 async function _storeCreate(fields, { c }) {
   if (fields.expose)
     throw new ValidationError("can't expose the product: no public photos and no cover photo")
-  if (fields.time) fields.time = new Date(fields.time)
+
+  const fieldsPrepared = prepareFields(fields)
 
   let res = null
 
   try {
-    res = await c.insertOne(fields)
+    res = await c.insertOne(fieldsPrepared)
   } catch (e) {
     // 121 is validation error: erroneous response example in https://www.mongodb.com/docs/manual/core/schema-validation/#existing-documents
     if (121 === e.code) throw new ValidationError(VALIDATION_FAIL_MSG, e)
@@ -25,13 +27,6 @@ async function _storeCreate(fields, { c }) {
   }
 
   return res.insertedId
-}
-
-function _wrapPhoto(photo) {
-  const e = validateObjectId(photo)
-  if (e) throw new ValidationError('photo objectId is invalid', e)
-
-  return new ObjectId(photo)
 }
 
 /**
@@ -61,10 +56,10 @@ async function _storeUpdate(id, { write, remove }, { product, photo }) {
       )
   }
 
-  if (write?.time) write.time = new Date(write.time)
-
   const query = {}
-  if (write) query.$set = write
+  if (write) query.$set = prepareFields(write)
+
+  console.log('_storeUpdate, query.$set:', query.$set)
 
   if (remove) {
     query.$unset = {}
@@ -708,8 +703,8 @@ async function _storeGetPhotos(productId, publicPhotos, { photo }) {
       $project: {
         id: '$_id',
         productId: 1,
-        pathsPublic: 1,
-        pathsLocal: 1,
+        pathPublic: 1,
+        pathLocal: 1,
         public: 1,
         cover: 1,
         order: 1,
